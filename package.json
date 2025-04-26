@@ -38,7 +38,8 @@
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^4.3.8",
     "pg": "^8.14.1",
-    "tar-fs": "^3.0.8"
+    "tar-fs": "^3.0.8",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "vitest": "^3.1.1"

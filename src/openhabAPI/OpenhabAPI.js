@@ -1,7 +1,7 @@
 import axios from 'axios';
 import base64 from 'base-64'
 import OpenhabApiError from '../error/OpenhabApiError.js'
-
+import {v4, uuidv4} from 'uuid'
 export default class OpenhabAPI {
     constructor() { // default context value if not provided
        this.websocketUrl = `ws[s]://${process.env.OPENHAB_URL}:8443/ws?accessToken=${process.env.API_TOKEN}`
@@ -9,6 +9,7 @@ export default class OpenhabAPI {
        this.basicAuth = 'Basic ' + Buffer.from(`${process.env.API_TOKEN}:`).toString('base64');
        this.brokerThingUID = process.env.MQTT_BROKER_THING_UID;
        this.prefix = 'MQTT_Broker_Hubos_';
+       this.rulePrefix = 'Hubos_Rule_';
         // this.frame = fr.getImageSample();
     }
 
@@ -137,7 +138,8 @@ export default class OpenhabAPI {
                 category: 'hubos',
                 tags: [
                     "Hubos",
-                    appName
+                    this.replaceDashesWithUnderscores(appName),
+                    'Point'
                 ],
                 groupNames: [],
                 stateDescription: {
@@ -167,8 +169,32 @@ export default class OpenhabAPI {
         }
     }
 
-    async createRule(tarRule){
+    async createRule(appName, moduleId, triggers, conditions, actions){
+        const uid = this.generateUID();
+        const moduleName = this.replaceDashesWithUnderscores(moduleId);
         try {
+            const rule =
+                {
+                  status: {
+                    status: "IDLE",
+                    statusDetail: "NONE"
+                  },
+                  editable: true,
+                  triggers: triggers,
+                  conditions: conditions,
+                  actions:actions,
+                  configuration: {},
+                  configDescriptions: [],
+                  uid: uid,
+                  name: moduleName,
+                  tags: [
+                    appName,
+                    "Hubos"
+                  ],
+                  visibility: "VISIBLE"
+                }
+
+
             const response = await axios.post(`${this.baseUrl}/rules`, tarRule, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -189,5 +215,10 @@ export default class OpenhabAPI {
 
     replaceUnderscoresWithDashes(input) {
         return input.replace(/_/g, '-');
+    }
+
+    generateUID() {
+        const uid = uuidv4().replace(/-/g, '');  // Supprime tous les tirets
+        return uid;
     }
 }
