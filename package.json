@@ -1,0 +1,46 @@
+{
+  "name": "hubos-core",
+  "version": "0.1",
+  "description": "HubOS core code",
+  "main": "src/start.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "prod": "NODE_ENV=production node src/start.js",
+    "dev": "NODE_ENV=dev node src/start.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CloudLargeScale-UCLouvain/hubos-dev.git"
+  },
+  "keywords": [
+    "smart",
+    "home",
+    "privacy",
+    "smart",
+    "hub"
+  ],
+  "author": "Igor Zavalyshyn",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CloudLargeScale-UCLouvain/hubos-dev/issues"
+  },
+  "homepage": "https://github.com/CloudLargeScale-UCLouvain/hubos-dev#readme",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "base-64": "^1.0.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dockerode": "^4.0.6",
+    "dotenv": "^16.0.3",
+    "express": "^5.1.0",
+    "http-proxy": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "mqtt": "^4.3.8",
+    "pg": "^8.14.1",
+    "tar-fs": "^3.0.8"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.1"
+  }
+}

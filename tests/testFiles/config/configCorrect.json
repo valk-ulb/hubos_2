@@ -1,0 +1,29 @@
+{
+    "configuration":{
+        "devices":{
+            "myDeviceName":{
+                "UID" : "123e4567-e89b-12d3-a456-426614174000",
+                "type" : "myType",
+                "description" : "Little description of the device for the user"
+            },
+            "myDeviceName2":{
+                "UID" : "124e4567-e89b-12d3-a456-426614174000",
+                "type" : "myType",
+                "description" : "Little description 2 of the device for the user"
+            }
+        },
+        "servers":{
+            "myServerName":{
+                "host" : "www.example.com",
+                "port" : "1234",
+                "description" : "Little description of the server for the user"
+            },
+            "myServerName2":{
+                "host" : "www.example2.com",
+                "port" : "1234",
+                "description" : "Little description 2 of the server for the user"
+            }
+        }
+        
+    }
+}

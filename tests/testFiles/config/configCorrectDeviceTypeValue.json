@@ -1,0 +1,13 @@
+{
+    "configuration":{
+        "devices":{
+            "myDeviceName":{
+                "UID" : "123e4567-e89b-12d3-a456-426614174000",
+                "type" : "myTyp222e",
+                "description" : "Little description of the device for the user"
+            }
+        },
+        "servers":{}
+        
+    }
+}

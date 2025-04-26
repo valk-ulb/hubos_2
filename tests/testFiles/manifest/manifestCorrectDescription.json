@@ -1,0 +1,17 @@
+{
+    "name": "test1",
+    "descri1ption": "Control your smart home devices with voice commands.",
+    "type": "testing",
+    "modules": [
+        {
+            "name": "test1_service",
+            "type": "service",
+            "description":"little description"
+        },
+        {
+            "name": "test1",
+            "type": "handler",
+            "description":"little description"
+        }
+    ]
+}
