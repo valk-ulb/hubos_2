@@ -1,0 +1,13 @@
+{
+    "configuration":{
+        "devices":{
+            "myDevic../..eName":{
+                "UID" : "123e4567-e89b-12d3-a456-426614174000",
+                "type" : "myType",
+                "description" : "Little description of the device for the user"
+            }
+        },
+        "servers":{}
+        
+    }
+}

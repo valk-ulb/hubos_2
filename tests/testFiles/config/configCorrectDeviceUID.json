@@ -1,0 +1,13 @@
+{
+    "configuration":{
+        "devices":{
+            "myDeviceName":{
+                "UID2" : "1112231",
+                "type" : "myType",
+                "description" : "Little description of the device for the user"
+            }
+        },
+        "servers":{}
+        
+    }
+}

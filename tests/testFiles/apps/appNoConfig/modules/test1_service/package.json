@@ -1,0 +1,11 @@
+{
+  "name": "test1_handler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test1_handler",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

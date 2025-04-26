@@ -1,0 +1,63 @@
+CREATE TABLE IF NOT EXISTS app (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    path TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type Text NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Last_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS module (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    app_id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    type TEXT NOT NULL,
+    refreshToken TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Last_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_app FOREIGN KEY (app_id) REFERENCES app(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS appDevice (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    app_id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    deviceUID VARCHAR(100) ,
+    description TEXT,
+    type TEXT ,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Last_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_app FOREIGN KEY (app_id) REFERENCES app(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS appServer (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    app_id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    host VARCHAR(100),
+    port VARCHAR(10),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Last_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_app FOREIGN KEY (app_id) REFERENCES app(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS event (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    module_id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Last_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_module FOREIGN KEY (module_id) REFERENCES module(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS permission (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    event_id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Last_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_module FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE
+);

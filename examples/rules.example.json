@@ -1,0 +1,100 @@
+[
+    {
+        "name":"rule_example_1",
+        "description": "rule example contains any",
+        "when":{
+            "event": "eventName1",
+            "context": "containsAny",
+            "value": ["event1","event2"]
+        },
+        "condition":  [],
+        "then": [
+            {
+                "access": "NetworkClient",
+                "type": "service",
+                "context": {
+                    "period": "5"
+                }
+            },
+            {
+                "access":"service1",
+                "type": "device",
+                "context":{
+                    "period":"5"
+                }
+            }
+        ]
+    },
+    {
+        "name":"rule_example_2",
+        "description":"rule example contains",
+        "when":{
+            "event": "eventName2",
+            "context": "contains",
+            "value": "event1"
+        },
+        "condition":  [],
+        "then": [
+            {
+                "access": "NetworkClient",
+                "type": "service",
+                "context": {
+                    "period": "5"
+                }
+            },
+            {
+                "access":"service1",
+                "type": "device",
+                "context":{
+                    "period":"5"
+                }
+            },
+            {
+                "access":"service2",
+                "type": "device",
+                "context":{
+                    "period":"5"
+                }
+            }
+        ]
+    },
+    {
+        "name":"rule_example_3",
+        "description":"rule example with condition",
+        "when":{
+            "event":"eventName1",
+            "context": "= / equals",
+            "value": "x"
+        },
+        "condition":  [
+            {
+                "event":"eventName2",
+                "context": "> / higher than",
+                "value": "x"
+            }
+        ],
+        "then": [
+            {
+                "access": "NetworkClient",
+                "type": "service",
+                "context": {
+                    "period": "5"
+                }
+            },
+            {
+                "access":"service1",
+                "type": "device",
+                "context":{
+                    "period":"5"
+                }
+            },
+            {
+                "access":"service2",
+                "type": "device",
+                "context":{
+                    "period":"5"
+                }
+            }
+        ]
+    }
+]
