@@ -30,6 +30,7 @@
     "axios": "^1.9.0",
     "base-64": "^1.0.0",
     "bcrypt": "^5.1.1",
+    "commander": "^14.0.0",
     "cors": "^2.8.5",
     "dockerode": "^4.0.6",
     "dotenv": "^16.0.3",
@@ -38,10 +39,12 @@
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^4.3.8",
     "pg": "^8.14.1",
+    "straightforward": "^4.2.2",
     "tar-fs": "^3.0.8",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "http-proxy-middleware": "^3.0.5",
     "vitest": "^3.1.1"
   }
 }

@@ -15,13 +15,117 @@ import path from 'path';
 import Hserver from './core/Hserver.js';
 import {createJWT} from './utils/jwtUtil.js'
 import OpenhabAPI from './openhabAPI/OpenhabAPI.js';
+import Hproxy from './core/HProxy.js';
+import Hproxy2 from './core/HProxy2.js';
+
+import { program } from 'commander';
+import * as dotenv from "dotenv";
+import AppManager from './Controller/AppManager.js';
+dotenv.config({});
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __rootDirname = dirname(__filename);
 logger.info(`root directory = ${__rootDirname}`)
 
+let openhabAPI = new OpenhabAPI();
+
+// MQTT admin connect
+let mqttAdmin = new MqttAdmin();
+
+await mqttAdmin.connect();
+await mqttAdmin.subscribeToAdminTopic();
+
+// Configure proxy
+const p = new Hproxy();
+p.configureForwardProxy();
+p.startProxy();
+
+// Sandbox manager
+const sm = new SandboxManager();
+
+// App manager
+const appManager = new AppManager();
 
 
+
+program
+    .description('remove all db')
+    .command('removeall')
+    .option('-d, --debug','Debug mode')
+    .action(async (options) => {
+        process.env.NODE_ENV = options.debug ? 'dev' : 'production';
+        const modulesUID = await appManager.getAllModulesUID();
+        modulesUID.forEach(async (moduleUID) => {
+            // stop + remove all container
+            await sm.stopAndRemoveContainer(`${moduleUID}:latest`).catch(err =>{});
+            await sm.removeImage(`${moduleUID}:latest`).catch(err =>{});
+            await sm.stopAndRemoveContainer(`${moduleUID}`).catch(err =>{});
+            await sm.removeImage(`${moduleUID}`).catch(err =>{});
+            // remove client mqtt
+            await mqttAdmin.disableClient(moduleUID).catch(err =>{});
+            await mqttAdmin.deleteClient(moduleUID).catch(err =>{});
+            await mqttAdmin.deleteRole(`role-${moduleUID}`).catch(err =>{});
+        })
+        // remove admin mqtt 
+        await mqttAdmin.disableClient("hubosClient").catch(err =>{});
+        await mqttAdmin.deleteClient("hubosClient").catch(err =>{});
+        await mqttAdmin.deleteRole(`hubos`).catch(err =>{});
+        await mqttAdmin.disableClient("openhabClient").catch(err =>{});
+        await mqttAdmin.deleteClient("openhabClient").catch(err =>{});
+        await mqttAdmin.deleteRole(`openHab`).catch(err =>{});
+
+        // erase db tables
+        await db.dropTables();
+    });
+
+program
+    .description('HubOS start + configure')
+    .command('start')
+    .option('-d, --debug','Debug mode')
+    .action(async (options) => {
+        process.env.NODE_ENV = options.debug ? 'dev' : 'production';
+        await mqttAdmin.createSupervisorRole('hubos');
+        await mqttAdmin.createSupervisorRole('openHab');
+        await mqttAdmin.createClient('hubosClient','hubosClient','','hubos client',['hubos'])
+        await mqttAdmin.createClient('openhabClient','openhabClient','','openHab client',['openHab'])
+        const brokerThing = await openhabAPI.getBrokerThing();
+
+        await appManager.extractApps();
+        appManager.apps.forEach(async (app) => {
+            await app.manifestModules.forEach(async (module) => {
+                logger.info(`mqtt configuration for module ${module.moduleId}`)
+                await mqttAdmin.createModuleRole(module.moduleId, `role-${module.moduleId}`);
+                await mqttAdmin.createClient(module.moduleId, module.moduleId, module.moduleId, `client module: ${module.moduleId}`,[`role-${module.moduleId}`]);
+
+                logger.info(`openhab configuration for module ${module.moduleId}`)
+                const topicItem = await openhabAPI.createTopicItem(`item_${module.moduleId}`,`item_${module.moduleId}`);
+                const topicChannel = await openhabAPI.createTopicChannel(`hubos/topic-${module.moduleId}`, `item_${module.moduleId}`);
+                const linkItem = await openhabAPI.linkItemToChannel(`item_${module.moduleId}`)
+                
+                logger.info(`sanbox creation and run for module ${module.moduleId}`);
+                const tokens = createJWT(module.moduleId);
+                const pack = await sm.buildTarStream(join(app.appPath, module.moduleName),app.configPath, tokens)
+                await sm.buildImageWithTar(pack, module.moduleId)
+                let cont = await sm.createContainer(module.moduleId)
+                sm.startContainer(cont);
+                logger.info('sanbox creation and start is a success')
+            });
+        })
+    });
+
+program
+    .description("HubOS run")
+    .command('run')
+    .option("-d, --debug", "Debug mode")
+    .option("-r, --reset", "reset all data and run")
+    .action(async (options) => {
+        process.env.NODE_ENV = options.debug ? 'production' : 'dev';
+    });
+
+program.parse();
+
+/*
 const appPath = join(__rootDirname, 'apps/test1/modules/test1')
 const configPath = join(__rootDirname, 'apps/test1/config.json')
 const viewPath = join(__rootDirname,'views');
@@ -30,8 +134,10 @@ let hserver = new Hserver(viewPath);
 hserver.setupMiddelwares();
 hserver.setupRoutes();
 hserver.start();
+*/
 
-let o = new OpenhabAPI();
+
+/*
 
 let res = await o.getItemState('MQTT_Broker_testOfMe');
 //logger.info(res)
@@ -43,7 +149,7 @@ res = await o.createTopicItem('myTestItem', 'myApp222');
 res = await o.createTopicChannel('/test/te/t','myTestItem').catch(err => console.log(err));
 console.log("linking")
 res = await o.linkItemToChannel('myTestItem');
-
+*/
 /*
 let a = new MqttAdmin();
 
@@ -74,6 +180,11 @@ await a.createClient('openhabClient','openhabClient','','openHab client',['openH
 */
 
 /*
+const p = new Hproxy();
+p.configureForwardProxy();
+p.startProxy();
+
+
 const sm = new SandboxManager();
 const tokens = createJWT();
 const pack = await sm.buildTarStream(appPath, configPath, tokens)
@@ -88,8 +199,11 @@ await sm.buildImageWithTar(pack, 'image-test')
 let cont = await sm.createContainer('image-test')
 
 sm.startContainer(cont);
+console.log("here")
 
+*/
 
+/*
 const outputPath = resolve('./output.tar');
 const yourTarball = fs.createWriteStream(outputPath)
 

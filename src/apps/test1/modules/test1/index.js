@@ -1,28 +1,18 @@
-import fs from 'fs/promises';
+import axios from 'axios';
 import 'dotenv/config'
-
 async function processTriggerEvent() {
-
+    const host = 'google.com'
     setInterval(async () => {
+        
         try{
-            const config = await fs.readFile('./config.json', 'utf-8');
-            console.log('🧾 Config:', JSON.parse(config));
-        }catch(err){
-            console.log(err)
-        }
-        try{
-            const tst = await fs.readFile('./a/test.txt', 'utf-8');
-            console.log('🧾 text:', (tst)); 
-        }catch(err){
-            console.log(err)
-        }
-        try{
-            console.log('env: ', process.env.MODULE_UID)
-        }catch(err){
-            console.log(err)
-        }
-        try{
-            console.log('env: ', process.env.ICI)
+            axios.get('http://host.docker.internal:9090')
+                .then(response => {
+                    // Afficher le corps de la réponse
+                    console.log('Response:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error occurred:', error);
+                });
         }catch(err){
             console.log(err)
         }

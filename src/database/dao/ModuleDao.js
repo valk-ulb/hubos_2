@@ -30,4 +30,23 @@ export default class ModuleDao {
             throw new DatabaseError(`Error : while trying to retrieve modules with following appname : ${app.appName}`, err);
         }
     }
+
+    async getAllModulesUID(){
+        try {
+            const queryText = `
+            SELECT id 
+            FROM module;
+            `;
+            const {rows} = await db.pool.query(queryText);
+            if (rows.length > 0){
+                var res = []
+                rows.forEach((r) => res.push(r.id));
+                return res;
+            }
+            return [];
+        }catch(err){
+            throw new DatabaseError(`Error : while trying to get all modules UID`, err.message);
+        }
+    }
+
 }

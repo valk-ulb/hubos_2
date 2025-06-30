@@ -1,7 +1,6 @@
 import axios from 'axios';
 import base64 from 'base-64'
 import OpenhabApiError from '../error/OpenhabApiError.js'
-import {v4, uuidv4} from 'uuid'
 export default class OpenhabAPI {
     constructor() { // default context value if not provided
        this.websocketUrl = `ws[s]://${process.env.OPENHAB_URL}:8443/ws?accessToken=${process.env.API_TOKEN}`
@@ -218,7 +217,10 @@ export default class OpenhabAPI {
     }
 
     generateUID() {
-        const uid = uuidv4().replace(/-/g, '');  // Supprime tous les tirets
+        //const uid = uuidv4().replace(/-/g, '');  // Supprime tous les tirets
+        const uid = 0;
         return uid;
     }
+
+    
 }

@@ -1,8 +1,9 @@
 module.exports = class TabacCondition {
-    constructor(access, type, context ) { // default context value if not provided
-        this.access = access;
-        this.type = type;
+    constructor(name, event, context, value ) { // default context value if not provided
+        this.name = name;
+        this.event = event;
         this.context = context;
+        this.value = value;
     }
 
 }

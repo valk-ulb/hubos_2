@@ -193,4 +193,22 @@ export default class AppDao {
         }
     }
 
+    async getAllAppsName(){
+        try {
+            const queryText = `
+            SELECT name 
+            FROM app;
+            `;
+            const {rows} = await db.pool.query(queryText);
+            if (rows.length > 0){
+                var res = []
+                rows.forEach((r) => res.push(r.name));
+                return res;
+            }
+            return [];
+        }catch(err){
+            throw new DatabaseError(`Error : while trying to get all App name`, err.message);
+        }
+    }
+
 }

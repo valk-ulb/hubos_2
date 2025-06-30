@@ -11,7 +11,6 @@ class Logger {
      * @param {string} [logFilePath='./app.log'] - Chemin du fichier de logs en production
      */
     constructor() {
-        this.env = process.env.NODE_ENV;
 
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
@@ -52,16 +51,16 @@ class Logger {
         const logLine = `${now} [${level}] ${message}`;
     
         // Affiche dans la console
-        console.log(logLine, ...args);
-        if (this.env === 'production') {
-            // Écrit aussi dans le fichier
-            const extra = args.length ? ' ' + JSON.stringify(args) : '';
-            const fileLine = `${logLine}${extra}\n`;
-            try {
-                fs.appendFileSync(this.logFilePath, fileLine, 'utf8');
-            } catch (err) {
-                console.error(`Impossible d’écrire dans le fichier de log: ${err.message}`);
-            }
+        if (process.env.NODE_ENV === 'dev') {
+            console.log(logLine, ...args);
+        }
+        // Écrit aussi dans le fichier
+        const extra = args.length ? ' ' + JSON.stringify(args) : '';
+        const fileLine = `${logLine}${extra}\n`;
+        try {
+            fs.appendFileSync(this.logFilePath, fileLine, 'utf8');
+        } catch (err) {
+            console.error(`Impossible d’écrire dans le fichier de log: ${err.message}`);
         }
     }
 }

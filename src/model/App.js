@@ -8,6 +8,7 @@ import { isSafeUID, isSafeName, isSafeText, isSafeType, isHost, isNumber, isSafe
 import logger from '../utils/logger.js';
 import fs from 'fs/promises';
 import { checkFormat } from '../utils/FormatChecker.js';
+import TabacManager from '../tabacManager/TabacManager.js';
 export default class App {
 
     /**
@@ -26,7 +27,7 @@ export default class App {
         this.tabacPath = join(appPath, 'tabac-rules');
         this.tabacFilePath = join(this.tabacPath, 'rules.json');
         this.modulesPath = join(this.appPath, 'modules');
-
+        this.tabac = new TabacManager(this.tabacFilePath);
         this.appName = appName;
         this.appDescription = appDescription;
         this.appType = appType;
@@ -93,6 +94,11 @@ export default class App {
             const tempModule = new Module(module.name,module.type,module.description);
             this.manifestModules.push(tempModule);
         });
+    }
+
+    extractTabacRules(){
+        this.tabac.extractTabacRules();
+        // IL faut sauver les rules.
     }
 
     /**

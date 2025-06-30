@@ -165,7 +165,7 @@ export default class MqttClient{
     async enableClient(username) {
         logger.info(`enabling client : ${username}`)
         if (!this.admin || !this.admin.connected) {
-          console.error('MQTT client is not connected.');
+          logger.error('MQTT client is not connected.');
           throw new MqttError('Client MQTT not connected');
         }
       
@@ -188,7 +188,7 @@ export default class MqttClient{
     async disableClient(username) {
         logger.info(`disabling client : ${username}`)
         if (!this.admin || !this.admin.connected) {
-          console.error('MQTT client is not connected.');
+          logger.error('MQTT client is not connected.');
           throw new MqttError('Client MQTT not connected');
         }
       
@@ -212,7 +212,7 @@ export default class MqttClient{
     async getClient(username){
         logger.info(`get client : ${username}`)
         if (!this.admin || !this.admin.connected) {
-            console.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.');
             throw new MqttError('Client MQTT not connected');
         }
         
@@ -236,7 +236,7 @@ export default class MqttClient{
     async createModuleRole(moduleId, rolename){
         logger.info(`create role : ${moduleId}`)
         if (!this.admin || !this.admin.connected) {
-            console.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.');
             throw new MqttError('Client MQTT not connected');
         }
         const topic = moduleId;
@@ -274,7 +274,7 @@ export default class MqttClient{
     async createSupervisorRole(rolename){
         logger.info(`create role : ${rolename}`)
         if (!this.admin || !this.admin.connected) {
-            console.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.');
             throw new MqttError('Client MQTT not connected');
         }
 
@@ -301,7 +301,7 @@ export default class MqttClient{
     async deleteRole(rolename){
         logger.info(`delete role : ${rolename}`)
         if (!this.admin || !this.admin.connected) {
-            console.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.');
             throw new MqttError('Client MQTT not connected');
         }
         

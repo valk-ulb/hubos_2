@@ -73,7 +73,9 @@ export default class SandboxManager {
     async buildImageWithTar(tarStream, moduleUID){
         let stream = await this.docker.buildImage(tarStream, {
             t: `${moduleUID}:latest`,
-            dockerfile:'Dockerfile'
+            dockerfile:'Dockerfile',
+            buildargs:{
+            }
         });
         await new Promise((resolve, reject) => {
             this.docker.modem.followProgress(
@@ -92,27 +94,14 @@ export default class SandboxManager {
             name: imageName,
             HostConfig: {
                 Runtime: 'runsc',
-                NetworkMode: 'bridge'
+                NetworkMode: 'host'
+            },
+            ExposedPorts: {
+                '9090/tcp': {}
             },
             Env: [
                 `MODULE_UID=${imageName}`
             ]
-        });
-        return container;
-    }
-
-    async createContainerOnlyLocal(imageName){
-        const container = await this.docker.createContainer({
-            Image: `${imageName}:latest`,
-            name: imageName,
-            HostConfig: {
-                Runtime: 'runsc',
-                NetworkMode: 'bridge'
-            },
-            Env: {
-                HTTP_PROXY: 'http://172.17.0.1:8080',
-                HTTPS_PROXY: 'http://172.17.0.1:8080'
-            }
         });
         return container;
     }

@@ -11,11 +11,11 @@ module.exports = class TabacRule {
         this.conditions = []
 
         conditions.array.forEach(condition => {
-            this.conditions.push(new TabacCondition(condition['access'], condition['type'],condition['context']));
+            this.conditions.push(new TabacCondition(condition['name'], condition['if']['event'],condition['if']['context'], condition['if']['value']));
         });
         
         actions.array.forEach(action => {
-            this.actions.push( new TabacAction(action['access'],action['type'],action['context']));
+            this.actions.push( new TabacAction(action['access'],action['type'],action['context'], action['context']['period']));
         });
     }
 }

@@ -131,4 +131,10 @@ export default class AppManager {
 
         return await appDao.appExist(appName, appPath);
     } 
+
+    async getAllModulesUID(){
+        const moduleDao = new ModuleDao();
+        return await moduleDao.getAllModulesUID();
+    }
+    
 }
