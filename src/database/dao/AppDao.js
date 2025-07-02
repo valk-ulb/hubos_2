@@ -132,6 +132,28 @@ export default class AppDao {
     }
 
     /**
+     * Update the rule file hash of an app.
+     * @param {String} app_id App id to update.
+     * @param {String} appName App name to update.
+     * @param {String} ruleFileHash Hash string to store. 
+     * @returns True if the hash is successfully added.
+     */
+    async updateAppRuleFileHash (app_id, appName, ruleFileHash){
+        try{
+            const queryUpdate = 
+            `
+                UPDATE app
+                SET rule_file_hash = $1
+                WHERE id = $2;
+            `;
+            const res = await db.pool.query(queryUpdate,[ruleFileHash, app_id]);
+            return rows.length > 0 && rows[0].found; 
+        }catch(err){
+            throw new DatabaseError(`Error while updating rule file hash : ${appName}`, err);
+        }
+    }
+
+    /**
      * Check if a given app already exist in the db.
      * @param {String} appName - The app name.
      * @param {String} appPath - the app path.
@@ -154,9 +176,9 @@ export default class AppDao {
     }
 
     /**
-     * Gets the UID of an app by its name.
+     * Gets an app by its name.
      * @param {App} app - The name of the app.
-     * @returns The app UID if found, or null if not found.
+     * @returns The app if found, or null if not found.
      */
     async getAppByName(appName) {
         try {
@@ -174,6 +196,30 @@ export default class AppDao {
             }
         } catch (err) {
             throw new DatabaseError(`Error : while trying to retrieve an App with following appname : ${appName}`, err.message);
+        }
+    }
+
+    /**
+     * Gets the UID of an app by its name.
+     * @param {App} app - The name of the app.
+     * @returns The app UID if found, or null if not found.
+     */
+    async getRuleDigestByAppName(appName) {
+        try {
+            const queryText = `
+            SELECT rule_file_hash
+            FROM app
+            WHERE name = $1
+            LIMIT 1
+            `;
+            const { rows } = await db.pool.query(queryText, [appName]);
+            if (rows.length > 0 && rows[0].rule_file_hash !== '') {
+                return rows[0].rule_file_hash;
+            } else {
+                throw new DatabaseError(`Error : No App rule digest found with following appname : ${appName}`);
+            }
+        } catch (err) {
+            throw new DatabaseError(`Error : while trying to retrieve an App rule digest with following appname : ${appName}`, err.message);
         }
     }
 

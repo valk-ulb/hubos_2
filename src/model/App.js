@@ -19,7 +19,7 @@ export default class App {
      * @param {String} appDescription - Description of the app.
      * @param {String} appType - Type of the app.
      */
-    constructor(appPath, id=null, appName=null, appDescription=null, appType=null, ) {
+    constructor(appPath, id=null, appName=null, appDescription=null, appType=null) {
         this.appId=id;      
         this.appPath = appPath;
         this.manifestPath = join(appPath, 'manifest.json');
@@ -31,7 +31,6 @@ export default class App {
         this.appName = appName;
         this.appDescription = appDescription;
         this.appType = appType;
-
         this.configuration = new AppConfiguration(this.configPath);
 
         this.manifestModules = [];
@@ -98,7 +97,6 @@ export default class App {
 
     extractTabacRules(){
         this.tabac.extractTabacRules();
-        // IL faut sauver les rules.
     }
 
     /**

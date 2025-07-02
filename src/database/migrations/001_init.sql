@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS app (
     path TEXT NOT NULL,
     description TEXT NOT NULL,
     type Text NOT NULL,
+    rule_file_hash VARCHAR(64) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     Last_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

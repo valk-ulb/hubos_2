@@ -7,6 +7,9 @@ import AppDao from '../database/dao/AppDao.js';
 import ModuleDao from '../database/dao/ModuleDao.js';
 import ServerDao from '../database/dao/ServerDao.js';
 import DeviceDao from '../database/dao/DeviceDao.js';
+import InconsistencyError from '../error/InconsistencyError';
+
+import {signFileMD5, checkFileMD5} from '../utils/hashUtil.js';
 
 import InconsistencyError from '../error/InconsistencyError.js'
 import UnsafeNameError from '../error/UnsafeNameError.js';
@@ -47,10 +50,14 @@ export default class AppManager {
         let newApp = new App(appPath);
         if (await this.doesAppExist(appName, appPath)){
             newApp = await this.getAppFromDB(appName);
+            digest = await this.getAppRuleDigestFromDB(appName);
+            if (!checkFileMD5(newApp.tabacFilePath,digest)) throw new InconsistencyError(`Error: the content of the rules.json file of ${appName} has changed`)
         }else{
             await newApp.checkApp(appName);
             await newApp.extractApp();
+            await newApp.extractTabacRules();
             await this.insertAppToDB(newApp);
+            await this.updateAppWithRuleMD5(newApp, newApp.tabacFilePath)
         }
         this.apps.push({'name':appName,'app': newApp});
     }
@@ -100,6 +107,12 @@ export default class AppManager {
         await appDao.insertCompleteApp(app);
     }
 
+    async updateAppWithRuleMD5(app, ruleFilePath){
+        const digest = await signFileMD5(ruleFilePath);
+        const appDao = new AppDao();
+        await appDao.updateAppRuleFileHash(app.appId,app.appName,digest);
+    }
+
     /**
      * Get the corresponding app from a given app name.
      * @param {String} appName - Name of the app to retrieve.
@@ -118,6 +131,12 @@ export default class AppManager {
         app.configuration.setServers(servers);
         app.setManifestModules(modules);
         return app;
+    }
+
+    async getAppRuleDigestFromDB(appName){
+        const appDao = new AppDao();
+        const digest = await appDao.getRuleDigestByAppName(appName);
+        return digest
     }
     
     /**
