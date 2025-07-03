@@ -7,6 +7,6 @@ export default class MqttAlreadyExistError extends Error{
         }
         super(message);
         this.name = "MqttAlreadyExistError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

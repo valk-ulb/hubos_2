@@ -21,12 +21,12 @@ export default class MqttClient{
             });
 
             this.client.on('connect', () => {
-                logger.info(`MQTT connected at ${this.url}`);
+                logger.info(`MQTT connected at ${this.url}`,true);
                 resolve();
             })
 
             this.client.on('error', (err) => {
-                logger.error('Error MQTT :', err.message);
+                logger.error('Error MQTT :',true, err.message);
                 reject(err);
             });
 
@@ -46,7 +46,7 @@ export default class MqttClient{
             if (err) {
                 throw new MqttError(`Error while subscribing to ${topic} :`, err.message);
             } else {
-                logger.info(`Subscribed to : ${topic}`);
+                logger.info(`Subscribed to : ${topic}`,true);
             }
         });
     }
@@ -57,7 +57,7 @@ export default class MqttClient{
             if (err) {
                 throw new MqttError(`Error trying to send a message ${topic} :`, err.message);
             } else {
-                logger.info(`Message sended to ${topic}`);
+                logger.info(`Message sended to ${topic}`,true);
             }
         });
     }
@@ -65,7 +65,7 @@ export default class MqttClient{
     disconnect() {
         if (this.client) {
             this.client.end(() => {
-                logger.info('MQTT deconnected');
+                logger.info('MQTT deconnected',true);
             });
         }
     }

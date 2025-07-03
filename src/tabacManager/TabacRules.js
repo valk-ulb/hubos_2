@@ -1,18 +1,20 @@
-const path = require('node:path');
-const TabaRule = require('./TabacRule')
+import path from 'node:path'
+import fs from 'fs'  
 
-module.exports = class TabacRules {
+import TabacRule from './TabacRule.js';
+export default class TabacRules {
     // CHANGED (ANY TO ANY or X TO Y) - UPDATED - CONTAINS - CONTAINS ANY - EQUALS - HIGHER THAN - HIGHER OR EQUALS THAN - LOWER THAN - LOWER OR EQUAL THAN
     constructor(tabacRulePath) { // default context value if not provided
         this.tabacRules = [];
         const rulesFilePath = tabacRulePath;
         const rulesFile = fs.readFileSync(rulesFilePath);
         this.appTabacRules = JSON.parse(rulesFile);
+        console.log(this.appTabacRules)
     }
 
     extractTabacRules(){
-        this.appTabacRules.array.forEach(rule => {
-            this.tabacRules.push(new TabaRule(rule['name'], rule['when'],rule['condition'], rule['then']));
+        this.appTabacRules.forEach(rule => {
+            this.tabacRules.push(new TabacRule(rule['name'], rule['when'],rule['condition'], rule['then']));
         });
     }
 }

@@ -21,37 +21,37 @@ class Logger {
         fs.mkdirSync(logsDir, { recursive: true });
     }
   
-    info(message, ...args) {
-        this._printLog('INFO', message, ...args);
+    info(message,toDisplay=false, ...args) {
+        this._printLog('INFO', message,toDisplay, ...args);
     }
 
-    serverInfo(message, ...args){
-        this._printLog('INFO', message, ...args);
+    serverInfo(message,toDisplay=false, ...args){
+        this._printLog('INFO', message,toDisplay, ...args);
     }
     
   
-    warn(message, ...args) {
-        this._printLog('WARN', message, ...args);
+    warn(message,toDisplay, ...args) {
+        this._printLog('WARN', message,toDisplay, ...args);
     }
   
-    error(message, ...args) {
-        this._printLog('ERROR', message, ...args);
+    error(message,toDisplay, ...args) {
+        this._printLog('ERROR', message,toDisplay, ...args);
     }
 
-    serverError(message, ...args){
-        this._printLog('ERROR', message, ...args);
+    serverError(message,toDisplay, ...args){
+        this._printLog('ERROR', message,toDisplay, ...args);
     }
   
     /**
      * Méthode interne pour factoriser la logique d'affichage et d'écriture
      * @private
      */
-    _printLog(level, message, ...args) {
+    _printLog(level, message,toDisplay, ...args) {
         const now = new Date().toISOString();
         const logLine = `${now} [${level}] ${message}`;
     
         // Affiche dans la console
-        if (process.env.NODE_ENV === 'dev') {
+        if (process.env.NODE_ENV === 'dev' || toDisplay) {
             console.log(logLine, ...args);
         }
         // Écrit aussi dans le fichier

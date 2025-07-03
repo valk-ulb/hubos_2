@@ -33,14 +33,14 @@ export default class ConfigurationDao {
             const { rows } = await client.query(query, [app.appId, appDevice.name, appDevice.uid, appDevice.description, appDevice.type]);
         
             if (rows.length > 0) {
-                logger.info(`new module inserted with id=${rows[0].id}`);
+                logger.info(`new module inserted with id=${rows[0].id}`,true);
                 return rows[0].id;
             } else {
                 logger.warn(`No line inserted with device name = ${appDevice.name} for app = ${app.appName}`);
                 return null;
             }
         } catch (err) {
-        logger.error('Error while adding a new module : ', err);
+        logger.error('Error while adding a new module : ',true, err);
         throw err; 
         } finally {
         client.release();
@@ -64,14 +64,14 @@ export default class ConfigurationDao {
             const { rows } = await client.query(query, [app.appId, appServer.name, appServer.ip, appServer.port, appServer.description]);
         
             if (rows.length > 0) {
-                logger.info(`new module inserted with id=${rows[0].id}`);
+                logger.info(`new module inserted with id=${rows[0].id}`,true);
                 return rows[0].id;
             } else {
                 logger.warn(`No line inserted with device name = ${deviceName} for app = ${app.appName}`);
                 return null;
             }
         } catch (err) {
-        logger.error('Error while adding a new module : ', err);
+        logger.error('Error while adding a new module : ',true, err);
         throw err; 
         } finally {
         client.release();

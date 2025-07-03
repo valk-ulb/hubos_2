@@ -7,11 +7,10 @@ import AppDao from '../database/dao/AppDao.js';
 import ModuleDao from '../database/dao/ModuleDao.js';
 import ServerDao from '../database/dao/ServerDao.js';
 import DeviceDao from '../database/dao/DeviceDao.js';
-import InconsistencyError from '../error/InconsistencyError';
+import InconsistencyError from '../error/InconsistencyError.js';
 
 import {signFileMD5, checkFileMD5} from '../utils/hashUtil.js';
 
-import InconsistencyError from '../error/InconsistencyError.js'
 import UnsafeNameError from '../error/UnsafeNameError.js';
 export default class AppManager {
 
@@ -28,15 +27,16 @@ export default class AppManager {
      * Extract all app from the apps/ folder.
      */
     async extractApps(){
+        logger.info('Extracting all apps')
         const appsPath = await this.listAppDirectories(this.appsDirPath) 
-        logger.info(`Founded apps path : ${JSON.stringify(appsPath)}`);
+        logger.info(`Founded apps path : ${JSON.stringify(appsPath)}`,true);
         appsPath.forEach(pair => {
             try{
-                logger.info(`Extracting app : ${pair.path}`);
+                logger.info(`Extracting app : ${pair.path}`,true);
                 this.extractApp(pair.name, pair.path);
-                logger.info(`App ${pair.path} extracted`);
+                logger.info(`App ${pair.path} extracted`,true);
             }catch(err){
-                logger.error(`Error while extracting the app : `, err)
+                logger.error(`Error while extracting the app : `,true, err)
             }
         })
     }
@@ -50,7 +50,7 @@ export default class AppManager {
         let newApp = new App(appPath);
         if (await this.doesAppExist(appName, appPath)){
             newApp = await this.getAppFromDB(appName);
-            digest = await this.getAppRuleDigestFromDB(appName);
+            const digest = await this.getAppRuleDigestFromDB(appName);
             if (!checkFileMD5(newApp.tabacFilePath,digest)) throw new InconsistencyError(`Error: the content of the rules.json file of ${appName} has changed`)
         }else{
             await newApp.checkApp(appName);
@@ -79,12 +79,12 @@ export default class AppManager {
     async listAppDirectories(appsDirPath){
         let appsPath = [];
         try{
-            logger.info("Listing all app directories.", appsDirPath)
+            logger.info("Listing all app directories.",true, appsDirPath)
             const entries = await fs.readdir(appsDirPath, { withFileTypes: true });
             logger.info(entries)
             for (const entry of entries){
                 if (entry.isDirectory()){
-                    logger.info(`Verifying apps directory : ${entry.name}.`)
+                    logger.info(`Verifying apps directory : ${entry.name}.`,true)
                     if (isSafeName(entry.name)){
                         const fullDirPath = path.join(appsDirPath, entry.name);
                         appsPath.push({'name':entry.name, 'path':fullDirPath});    

@@ -7,6 +7,6 @@ export default class OpenhabApiError extends Error{
         }
         super(message);
         this.name = "OpenhabApiError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

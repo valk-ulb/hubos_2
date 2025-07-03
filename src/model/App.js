@@ -27,7 +27,7 @@ export default class App {
         this.tabacPath = join(appPath, 'tabac-rules');
         this.tabacFilePath = join(this.tabacPath, 'rules.json');
         this.modulesPath = join(this.appPath, 'modules');
-        this.tabac = new TabacManager(this.tabacFilePath);
+        this.tabac = null;
         this.appName = appName;
         this.appDescription = appDescription;
         this.appType = appType;
@@ -49,14 +49,17 @@ export default class App {
     }
 
     async checkApp(appDirName){
+        logger.info(`Checking app ${appDirName}`,true)
         await this.checkAppStructure(this.appPath, this.tabacPath);
         const modulesNames = await this.checkManifestFileStructure(this.manifestPath,appDirName);
         await checkAppModulesDirStructure(this.modulesPath, modulesNames);
         await this.checkAppTabacFileStructure(this.tabacFilePath);
         await this.checkConfigurationFileStructure(this.configPath);
+        logger.info(`App Checked`,true)
     }
 
     async extractApp(){
+        logger.info('extracting app',true);
         const manifestFile = await fs.readFile(this.manifestPath);
         const manifestData = JSON.parse(manifestFile);
 
@@ -66,6 +69,7 @@ export default class App {
         
         await this.extractConfiguration(this.configPath);
         this.extractModules(manifestData);
+        logger.info('App extracted',true)
     }
 
     setID(appID){
@@ -77,11 +81,13 @@ export default class App {
      * @param {String} configurationPath - Path to the config.json file.
      */
     async extractConfiguration(configurationPath){
+        logger.info('extract configuration',true)
         const configurationFile = await fs.readFile(configurationPath);
         const configurationData = JSON.parse(configurationFile);
 
         this.configuration.extractDevices(configurationData);
         this.configuration.extractServers(configurationData);
+        logger.info('Configuration extracted',true)
     }
 
     /**
@@ -89,14 +95,19 @@ export default class App {
      * @param {any} manifestData - JSON parse of the manifest file.
      */
     extractModules(manifestData){
+        logger.info('Extract modules',true)
         manifestData.modules.forEach(async module => {
             const tempModule = new Module(module.name,module.type,module.description);
             this.manifestModules.push(tempModule);
         });
+        logger.info('Modules extracted',true)
     }
 
     extractTabacRules(){
+        logger.info('Extracting tabac rules',true)
+        this.tabac = new TabacManager(this.tabacFilePath);
         this.tabac.extractTabacRules();
+        logger.info('Tabac rules extracted',true)
     }
 
     /**
@@ -105,8 +116,10 @@ export default class App {
      * @param {String} tabacPath - Path of the tabac directory
      */
     async checkAppStructure(appPath, tabacPath){
+        logger.info('checking app structure',true)
         await checkAppRootStructure(appPath);
         await checkAppTabacDirStructure(tabacPath);
+        logger.info('app structure checked',true)
     }
 
     /**
@@ -138,6 +151,7 @@ export default class App {
         }else{
             throw new IncorrectJsonStructureError(`Error: the manifest file is incorrectly defined : ${this.appPath}`)
         }
+        logger.info('manifest file ok',true)
         return modulesName;
     }
 
@@ -198,6 +212,8 @@ export default class App {
                 throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined : ${this.appName}`)
             }
         });
+        logger.info('Tabac file ok',true)
+        return true
     }
     
     /**
@@ -225,6 +241,7 @@ export default class App {
         }else{
             throw new IncorrectJsonStructureError(`Error: the config file is incorrectly defined : ${this.appPath}`)
         }
+        logger.info('Configuration file ok', true)
     }
 
 }

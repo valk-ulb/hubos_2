@@ -6,6 +6,6 @@ export default class IncorrectStructureError extends Error{
         }
         super(message);
         this.name = "IncorrectStructureError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

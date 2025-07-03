@@ -7,6 +7,6 @@ export default class SandboxError extends Error{
         }
         super(message);
         this.name = "SandboxError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

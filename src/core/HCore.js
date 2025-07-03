@@ -14,13 +14,17 @@ export default class HCore{
     constructor(rootDirname){
         this.rootDirname = rootDirname
         this.appDirPath = path.join(rootDirname, './apps/');
-        logger.info(`apps directory path : ${this.appDirPath}`);
+        logger.info(`apps directory path : ${this.appDirPath}`,true);
         this.appManager = new AppManager(this.appDirPath);
         this.sandboxManager = new SandboxManager()
     }
 
     async extractApps(){
         this.appManager.extractApps();
+    }
+
+    getApps(){
+        return this.appManager.apps;
     }
 
     async resetContainers(){

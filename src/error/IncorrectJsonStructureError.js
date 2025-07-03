@@ -6,6 +6,6 @@ export default class IncorrectJsonStructureError extends Error{
         }
         super(message);
         this.name = "IncorrectJsonStructureError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

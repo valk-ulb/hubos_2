@@ -20,13 +20,15 @@ import Hproxy2 from './core/HProxy2.js';
 
 import { program } from 'commander';
 import * as dotenv from "dotenv";
-import AppManager from './Controller/AppManager.js';
 dotenv.config({});
 
 
 const __filename = fileURLToPath(import.meta.url);
 const __rootDirname = dirname(__filename);
+const __databaseDir = join(__rootDirname, './database')
 logger.info(`root directory = ${__rootDirname}`)
+
+
 
 let openhabAPI = new OpenhabAPI();
 
@@ -37,46 +39,49 @@ await mqttAdmin.connect();
 await mqttAdmin.subscribeToAdminTopic();
 
 // Configure proxy
-const p = new Hproxy();
-p.configureForwardProxy();
-p.startProxy();
-
-// Sandbox manager
-const sm = new SandboxManager();
+// const p = new Hproxy();
+// p.configureForwardProxy();
+// p.startProxy();
 
 // App manager
-const appManager = new AppManager();
-
-
+const hcore = new HCore(__rootDirname);
 
 program
-    .description('remove all db')
-    .command('removeall')
+    .description('reset all')
+    .command('reset')
     .option('-d, --debug','Debug mode')
     .action(async (options) => {
         process.env.NODE_ENV = options.debug ? 'dev' : 'production';
-        const modulesUID = await appManager.getAllModulesUID();
-        modulesUID.forEach(async (moduleUID) => {
-            // stop + remove all container
-            await sm.stopAndRemoveContainer(`${moduleUID}:latest`).catch(err =>{});
-            await sm.removeImage(`${moduleUID}:latest`).catch(err =>{});
-            await sm.stopAndRemoveContainer(`${moduleUID}`).catch(err =>{});
-            await sm.removeImage(`${moduleUID}`).catch(err =>{});
-            // remove client mqtt
-            await mqttAdmin.disableClient(moduleUID).catch(err =>{});
-            await mqttAdmin.deleteClient(moduleUID).catch(err =>{});
-            await mqttAdmin.deleteRole(`role-${moduleUID}`).catch(err =>{});
+        await db.setupDatabase().catch(()=>{})
+        await hcore.appManager.getAllModulesUID().then(async (modulesUID) => {
+            modulesUID.forEach(async (moduleUID) => {
+                logger.info(`removing module with uid : ${modulesUID} from system`,true)
+                // stop + remove all container
+                await hcore.sandboxManagerstopAndRemoveContainer(`${moduleUID}:latest`).catch(() => {});
+                await hcore.sandboxManagerremoveImage(`${moduleUID}:latest`).catch(() => {});
+                await hcore.sandboxManagerstopAndRemoveContainer(`${moduleUID}`).catch(() => {});
+                await hcore.sandboxManagerremoveImage(`${moduleUID}`).catch(() => {});
+                // remove client mqtt
+                await mqttAdmin.disableClient(moduleUID).catch(() => {});
+                await mqttAdmin.deleteClient(moduleUID).catch(() => {});
+                await mqttAdmin.deleteRole(`role-${moduleUID}`).catch(() => {});
+            })
         })
+        .catch(()=>{});
+        
         // remove admin mqtt 
-        await mqttAdmin.disableClient("hubosClient").catch(err =>{});
-        await mqttAdmin.deleteClient("hubosClient").catch(err =>{});
-        await mqttAdmin.deleteRole(`hubos`).catch(err =>{});
-        await mqttAdmin.disableClient("openhabClient").catch(err =>{});
-        await mqttAdmin.deleteClient("openhabClient").catch(err =>{});
-        await mqttAdmin.deleteRole(`openHab`).catch(err =>{});
+        await mqttAdmin.disableClient("hubosClient").catch(() => {});
+        await mqttAdmin.deleteClient("hubosClient").catch(() => {});
+        await mqttAdmin.deleteRole(`hubos`).catch(() => {});
+        await mqttAdmin.disableClient("openhabClient").catch(() => {});
+        await mqttAdmin.deleteClient("openhabClient").catch(() => {});
+        await mqttAdmin.deleteRole(`openHab`).catch(() => {});
 
         // erase db tables
         await db.dropTables();
+        await db.setupDatabase();
+        await db.setupExtension();
+        await db.initDB(__databaseDir);
     });
 
 program
@@ -85,31 +90,37 @@ program
     .option('-d, --debug','Debug mode')
     .action(async (options) => {
         process.env.NODE_ENV = options.debug ? 'dev' : 'production';
-        await mqttAdmin.createSupervisorRole('hubos');
-        await mqttAdmin.createSupervisorRole('openHab');
-        await mqttAdmin.createClient('hubosClient','hubosClient','','hubos client',['hubos'])
-        await mqttAdmin.createClient('openhabClient','openhabClient','','openHab client',['openHab'])
+        logger.info(`database directory: ${__databaseDir}`)
+
+        await db.setupDatabase().catch(()=>{})
+        await db.setupExtension().catch(()=>{});
+        await db.initDB(__databaseDir).catch(()=>{});
+
+        await mqttAdmin.createSupervisorRole('hubos').catch(()=>{});
+        await mqttAdmin.createSupervisorRole('openHab').catch(()=>{});
+        await mqttAdmin.createClient('hubosClient','hubosClient','','hubos client',['hubos']).catch(()=>{})
+        await mqttAdmin.createClient('openhabClient','openhabClient','','openHab client',['openHab']).catch(()=>{})
         const brokerThing = await openhabAPI.getBrokerThing();
 
-        await appManager.extractApps();
-        appManager.apps.forEach(async (app) => {
+        await hcore.extractApps();
+        hcore.getApps().forEach(async (app) => {
             await app.manifestModules.forEach(async (module) => {
-                logger.info(`mqtt configuration for module ${module.moduleId}`)
+                logger.info(`mqtt configuration for module ${module.moduleId}`,true)
                 await mqttAdmin.createModuleRole(module.moduleId, `role-${module.moduleId}`);
                 await mqttAdmin.createClient(module.moduleId, module.moduleId, module.moduleId, `client module: ${module.moduleId}`,[`role-${module.moduleId}`]);
 
-                logger.info(`openhab configuration for module ${module.moduleId}`)
+                logger.info(`openhab configuration for module ${module.moduleId}`,true)
                 const topicItem = await openhabAPI.createTopicItem(`item_${module.moduleId}`,`item_${module.moduleId}`);
                 const topicChannel = await openhabAPI.createTopicChannel(`hubos/topic-${module.moduleId}`, `item_${module.moduleId}`);
                 const linkItem = await openhabAPI.linkItemToChannel(`item_${module.moduleId}`)
                 
-                logger.info(`sanbox creation and run for module ${module.moduleId}`);
+                logger.info(`sanbox creation and run for module ${module.moduleId}`,true);
                 const tokens = createJWT(module.moduleId);
-                const pack = await sm.buildTarStream(join(app.appPath, module.moduleName),app.configPath, tokens)
-                await sm.buildImageWithTar(pack, module.moduleId)
-                let cont = await sm.createContainer(module.moduleId)
-                sm.startContainer(cont);
-                logger.info('sanbox creation and start is a success')
+                const pack = await hcore.sandboxManagerbuildTarStream(join(app.appPath, module.moduleName),app.configPath, tokens)
+                await hcore.sandboxManagerbuildImageWithTar(pack, module.moduleId)
+                let cont = await hcore.sandboxManagercreateContainer(module.moduleId)
+                hcore.sandboxManagerstartContainer(cont);
+                logger.info('sanbox creation and start is a success',true)
             });
         })
     });
@@ -187,18 +198,18 @@ p.startProxy();
 
 const sm = new SandboxManager();
 const tokens = createJWT();
-const pack = await sm.buildTarStream(appPath, configPath, tokens)
+const pack = await hcore.sandboxManagerbuildTarStream(appPath, configPath, tokens)
 
-await sm.stopAndRemoveContainer('image-test:latest').catch(err =>{})
-await sm.removeImage('image-test:latest').catch(err=>{})
-await sm.stopAndRemoveContainer('image-test').catch(err =>{})
-await sm.removeImage('image-test').catch(err=>{})
+await hcore.sandboxManagerstopAndRemoveContainer('image-test:latest').catch(() => {})
+await hcore.sandboxManagerremoveImage('image-test:latest').catch(err=>{})
+await hcore.sandboxManagerstopAndRemoveContainer('image-test').catch(() => {})
+await hcore.sandboxManagerremoveImage('image-test').catch(err=>{})
 
-await sm.buildImageWithTar(pack, 'image-test')
+await hcore.sandboxManagerbuildImageWithTar(pack, 'image-test')
 
-let cont = await sm.createContainer('image-test')
+let cont = await hcore.sandboxManagercreateContainer('image-test')
 
-sm.startContainer(cont);
+hcore.sandboxManagerstartContainer(cont);
 console.log("here")
 
 */

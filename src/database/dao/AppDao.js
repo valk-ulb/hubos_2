@@ -51,7 +51,7 @@ export default class AppDao {
         `;
         const res = await client.query(queryInsertApp, [app.appName, app.appPath, app.appDescription, app.appType]);
         if (res.rows.length > 0) {
-            logger.info(`New app added : ${app.appName}`)
+            logger.info(`New app added : ${app.appName}`,true)
             return res.rows[0].id;
         }else{
             throw new DatabaseError(`No line inserted with appName = ${app.appName}`);
@@ -75,7 +75,7 @@ export default class AppDao {
         const res = await client.query(queryInsertModule, [app_id, module.moduleName, module.moduleDescription, module.moduleType]);
 
         if (res.rows.length > 0) {
-            logger.info(`New module added for app : ${appName}`)
+            logger.info(`New module added for app : ${appName}`,true)
             return res.rows[0].id;
         }else{
             throw new DatabaseError(`No line inserted for module (${module.moduleName}) with appName = ${appName}`);
@@ -99,7 +99,7 @@ export default class AppDao {
         const res = await client.query(queryInsertDevice, [app_id, device.name, device.deviceUID, device.description, device.type]);
 
         if (res.rows.length > 0) {
-            logger.info(`New device configuration added for app : ${appName}`)
+            logger.info(`New device configuration added for app : ${appName}`,true)
             return res.rows[0].id;
         }else{
             throw new DatabaseError(`No line inserted for device (${device.name}) with appName = ${appName}`);
@@ -124,7 +124,7 @@ export default class AppDao {
         const res = await client.query(queryInsertServer, [app_id, server.name, server.host, server.port, server.description]);
 
         if (res.rows.length > 0) {
-            logger.info(`New server configuration added for app : ${appName}`)
+            logger.info(`New server configuration added for app : ${appName}`,true)
             return res.rows[0].id;
         }else{
             throw new DatabaseError(`No line inserted for server (${server.name}) with appName = ${appName}`);
@@ -146,7 +146,7 @@ export default class AppDao {
                 SET rule_file_hash = $1
                 WHERE id = $2;
             `;
-            const res = await db.pool.query(queryUpdate,[ruleFileHash, app_id]);
+            const rows = await db.pool.query(queryUpdate,[ruleFileHash, app_id]);
             return rows.length > 0 && rows[0].found; 
         }catch(err){
             throw new DatabaseError(`Error while updating rule file hash : ${appName}`, err);

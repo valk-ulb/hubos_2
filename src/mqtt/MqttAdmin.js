@@ -24,12 +24,12 @@ export default class MqttClient{
             });
 
             this.admin.on('connect', () => {
-                logger.info(`MQTT connected at ${this.url}`);
+                logger.info(`MQTT connected at ${this.url}`,true);
                 resolve();
             })
 
             this.admin.on('error', (err) => {
-                logger.error('Error MQTT :', err.message);
+                logger.error('Error MQTT :',true, err.message);
                 reject(err);
             });
 
@@ -47,14 +47,14 @@ export default class MqttClient{
     disconnect() {
         if (this.admin) {
             this.admin.end(() => {
-                logger.info('MQTT deconnected');
+                logger.info('MQTT deconnected',true);
             });
         }
     }
 
     async subscribeToAdminTopic(){
         if (!this.admin || !this.admin.connected) {
-            logger.error('Client MQTT not connected.');
+            logger.error('Client MQTT not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
         await this.admin.subscribe(`${this.adminTopic}/#`);
@@ -74,9 +74,9 @@ export default class MqttClient{
      * @param {String[]} roles - List of role names for the mqtt client.
      */
     async createClient(moduleId, password, clientId,description, roles= null, groups=null) {
-        logger.info(`creating client for : ${moduleId}`)
+        logger.info(`creating client for : ${moduleId}`,true)
         if (!this.admin || !this.admin.connected) {
-            logger.error('Client MQTT not connected.');
+            logger.error('Client MQTT not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
     
@@ -115,9 +115,9 @@ export default class MqttClient{
      * @param {*} newPassword - New password to set.
      */
     async setClientPassword(username, newPassword){
-        logger.info(`set client password : ${username}`)
+        logger.info(`set client password : ${username}`,true)
         if (!this.admin || !this.admin.connected) {
-            logger.error('Client MQTT not connected.');
+            logger.error('Client MQTT not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
       
@@ -140,9 +140,9 @@ export default class MqttClient{
      * @param {String} username - Username of the client to delete. 
      */
     async deleteClient(username) {
-        logger.info(`deleting client : ${username}`)
+        logger.info(`deleting client : ${username}`,true)
         if (!this.admin || !this.admin.connected) {
-            logger.error('Client MQTT not connected.');
+            logger.error('Client MQTT not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
       
@@ -163,7 +163,7 @@ export default class MqttClient{
      * @param {String} username - Client username.
      */
     async enableClient(username) {
-        logger.info(`enabling client : ${username}`)
+        logger.info(`enabling client : ${username}`,true)
         if (!this.admin || !this.admin.connected) {
           logger.error('MQTT client is not connected.');
           throw new MqttError('Client MQTT not connected');
@@ -186,9 +186,9 @@ export default class MqttClient{
      * @param {String} username Client username. 
      */
     async disableClient(username) {
-        logger.info(`disabling client : ${username}`)
+        logger.info(`disabling client : ${username}`,true)
         if (!this.admin || !this.admin.connected) {
-          logger.error('MQTT client is not connected.');
+          logger.error('MQTT client is not connected.',true);
           throw new MqttError('Client MQTT not connected');
         }
       
@@ -210,9 +210,9 @@ export default class MqttClient{
      * @returns 
      */
     async getClient(username){
-        logger.info(`get client : ${username}`)
+        logger.info(`get client : ${username}`,true)
         if (!this.admin || !this.admin.connected) {
-            logger.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
         
@@ -234,9 +234,9 @@ export default class MqttClient{
      * @returns String of rolename 
      */
     async createModuleRole(moduleId, rolename){
-        logger.info(`create role : ${moduleId}`)
+        logger.info(`create role : ${moduleId}`,true)
         if (!this.admin || !this.admin.connected) {
-            logger.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
         const topic = moduleId;
@@ -272,9 +272,9 @@ export default class MqttClient{
 
     //`role_supervisor_${entityName}`
     async createSupervisorRole(rolename){
-        logger.info(`create role : ${rolename}`)
+        logger.info(`create role : ${rolename}`,true)
         if (!this.admin || !this.admin.connected) {
-            logger.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
 
@@ -299,9 +299,9 @@ export default class MqttClient{
     }
 
     async deleteRole(rolename){
-        logger.info(`delete role : ${rolename}`)
+        logger.info(`delete role : ${rolename}`,true)
         if (!this.admin || !this.admin.connected) {
-            logger.error('MQTT client is not connected.');
+            logger.error('MQTT client is not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
         

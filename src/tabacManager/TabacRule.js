@@ -1,8 +1,8 @@
-const TabacTrigger = require('./TabacTrigger')
-const TabacAction = require('./TabacAction')
-const TabacCondition = require('./TabacCondition')
+import TabacTrigger from './TabacTrigger.js'
+import TabacAction from './TabacAction.js'
+import TabacCondition from './TabacCondition.js'
 
-module.exports = class TabacRule {
+export default class TabacRule {
     // CHANGED (ANY TO ANY or X TO Y) - UPDATED - CONTAINS - CONTAINS ANY - EQUALS - HIGHER THAN - HIGHER OR EQUALS THAN - LOWER THAN - LOWER OR EQUAL THAN
     constructor(name,triggers,conditions,actions ) { // default context value if not provided
         this.name = name;
@@ -10,11 +10,11 @@ module.exports = class TabacRule {
         this.actions = []
         this.conditions = []
 
-        conditions.array.forEach(condition => {
+        conditions.forEach(condition => {
             this.conditions.push(new TabacCondition(condition['name'], condition['if']['event'],condition['if']['context'], condition['if']['value']));
         });
         
-        actions.array.forEach(action => {
+        actions.forEach(action => {
             this.actions.push( new TabacAction(action['access'],action['type'],action['context'], action['context']['period']));
         });
     }

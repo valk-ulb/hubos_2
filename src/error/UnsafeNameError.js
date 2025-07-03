@@ -6,6 +6,6 @@ export default class UnsafeNameError extends Error {
         }
         super(message);
         this.name = "UnsafeNameError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

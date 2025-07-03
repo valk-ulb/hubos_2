@@ -7,6 +7,6 @@ export default class MqttNotFoundError extends Error{
         }
         super(message);
         this.name = "MqttNotFoundError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

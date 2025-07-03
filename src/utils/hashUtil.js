@@ -23,6 +23,6 @@ export async function signFileMD5(filePath){
 }
 
 export async function checkFileMD5(filePath, digestToCompare){
-    const digest = await signFileStream(filePath);
+    const digest = await signFileMD5(filePath);
     return digestToCompare === digest; 
 }

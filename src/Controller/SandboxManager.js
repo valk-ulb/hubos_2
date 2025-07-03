@@ -124,7 +124,7 @@ export default class SandboxManager {
             if (err){
                 throw new SandboxError(`Error: trying to build image from dir with path : ${pathToDir} and files : ${files}`,err)
             }else{
-                logger.info(`Image with Dir : ${pathToDir} and files : ${files} - build : `, response);
+                logger.info(`Image with Dir : ${pathToDir} and files : ${files} - build : `,true, response);
             }
         });
     }
@@ -152,9 +152,9 @@ export default class SandboxManager {
                 console.log(image.tag)
                 image.remove((err, data) => {
                     if (err) {
-                        logger.error('Error trying stopping a container :', err);
+                        logger.error('Error trying stopping a container :',true, err);
                       } else {
-                        logger.info('Container stoped with success', data);
+                        logger.info('Container stoped with success',true, data);
                       }
                 });
             }
@@ -181,9 +181,9 @@ export default class SandboxManager {
             containers.forEach( (containerInfo) => {
                 this.docker.getContainer(containerInfo.Id).remove((err, data) => {
                     if (err) {
-                        logger.error('Error trying stopping a container :', err);
+                        logger.error('Error trying removing a container :',true, err);
                       } else {
-                        logger.info('Container stoped with success', data);
+                        logger.info('Container removed with success',true, data);
                       }
                 });
             })
@@ -194,9 +194,9 @@ export default class SandboxManager {
         const image = this.docker.getImage(imageName);
         image.remove((err, data) => {
             if (err) {
-                logger.error('Error trying stopping a container :', err);
+                logger.error('Error trying removing a container image :',true, err);
               } else {
-                logger.info('Container stoped with success', data);
+                logger.info('Container image removed with success',true, data);
               }
         });
     }

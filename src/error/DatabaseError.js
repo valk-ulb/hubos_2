@@ -7,6 +7,6 @@ export default class DatabaseError extends Error{
         }
         super(message);
         this.name = "DatabaseError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

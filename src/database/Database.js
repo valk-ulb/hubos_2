@@ -39,14 +39,14 @@ class Database {
             port: process.env.POSTGRES_PORT
         });
         await this.client.connect()
-        logger.info("Connected !");
+        logger.info("Database Connected !",true);
         const res = await this.client.query(`SELECT datname FROM pg_catalog.pg_database WHERE datname = '${process.env.POSTGRES_DATABASE}'`);        
         if (res.rowCount === 0) {
-            logger.info(`${process.env.POSTGRES_DATABASE} database not found, creating it.`);
-            await this.client.query(`CREATE DATABASE "${process.env.POSTGRES_DATABASE}";`);
-            logger.info(`created database ${process.env.POSTGRES_DATABASE}`);
+            logger.info(`${process.env.POSTGRES_DATABASE} database not found, creating it.`,true);
+            await this.client.query(`CREATE DATABASE "${process.env.POSTGRES_DATABASE}";`,true);
+            logger.info(`created database ${process.env.POSTGRES_DATABASE}`,true);
         } else {
-            logger.info(`${process.env.POSTGRES_DATABASE} database exists.`);
+            logger.info(`${process.env.POSTGRES_DATABASE} database exists.`,true);
         }
         await this.client.end();
         this.client = new Client({
@@ -68,9 +68,9 @@ class Database {
                 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
             `;
             await client.query(query);
-            logger.info("extension 'uuid-ossp' created");
+            logger.info("extension 'uuid-ossp' created",true);
         } catch (err) {
-            logger.error("Error while creating the extension: ", err);
+            logger.error("Error while creating the extension: ",true, err);
         } finally{
             client.release();
         }
@@ -78,10 +78,9 @@ class Database {
 
     async connect(){
         this.client.connect()
-            .then(() => logger.info('Connected to the db'))
+            .then(() => logger.info('Connected to the db',true))
             .catch(err => {
-                logger.error('Connection error: ', err);
-                throw new DatabaseError('Connection error: ', err);
+                throw new DatabaseError('Connection error: ',true, err);
             })
     }
     
@@ -101,16 +100,16 @@ class Database {
             await client.query(sql);
             await client.query('COMMIT');
 
-            logger.info("Apps table created");
-            logger.info("Modules table created");
-            logger.info("app devices table created");
-            logger.info("app servers table created");
-            logger.info("Events table created");
-            logger.info("Permissions table created");
+            logger.info("Apps table created",true);
+            logger.info("Modules table created",true);
+            logger.info("app devices table created",true);
+            logger.info("app servers table created",true);
+            logger.info("Events table created",true);
+            logger.info("Permissions table created",true);
 
         } catch (err) {
             await client.query('ROLLBACK');
-            logger.error("Error while initiating the db: ", err);
+            logger.error("Error while initiating the db: ",true, err);
         } finally{
             client.release();
         }
@@ -131,9 +130,9 @@ class Database {
                 DROP TABLE IF EXISTS app;
             `;
             await client.query(dropQuery);
-            logger.info("ALL table are dropped");
+            logger.info("ALL table are dropped",true);
         } catch (err) {
-            logger.error("Error while removing table from the db: ", err);
+            logger.error("Error while removing table from the db: ",true, err);
         } finally{
             client.release();
         }
@@ -163,7 +162,7 @@ class Database {
                 return null;
             }
         } catch (err) {
-        logger.error('Error while adding a new event : ', err);
+        logger.error('Error while adding a new event : ',false, err);
         throw err; 
         } finally {
         client.release();
@@ -194,7 +193,7 @@ class Database {
                 return null;
             }
         } catch (err) {
-        logger.error('Error while adding a new permission : ', err);
+        logger.error('Error while adding a new permission : ',false, err);
         throw err; 
         } finally {
         client.release();
@@ -223,7 +222,7 @@ class Database {
                 return null;
             }
         } catch (err) {
-            console.error('Error retrieving app ID:', err);
+            console.error('Error retrieving app ID:',false, err);
             throw err;
         } finally {
             client.release();

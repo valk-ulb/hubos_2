@@ -7,6 +7,6 @@ export default class InconsistencyError extends Error{
         }
         super(message);
         this.name = "InconsistencyError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }

@@ -7,6 +7,6 @@ export default class EnvFileError extends Error{
         }
         super(message);
         this.name = "EnvFileError"
-        logger.error(`${this.name} : ${message}`);
+        logger.error(`${this.name} : ${message}`,true);
     }
 }
