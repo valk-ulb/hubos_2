@@ -4,7 +4,7 @@ import IncorrectJsonStructureError from '../error/IncorrectJsonStructureError.js
 import AppConfiguration from './Configuration.js';
 import Module from './Module.js';
 import {join} from 'path'
-import { isSafeUID, isSafeName, isSafeText, isSafeType, isHost, isNumber, isSafeValue, isSafeContext, isSafeUIDWithEmptyStringAcceptance, isHostWithEmptyStringAcceptance, isNumberWithEmptyStringAcceptance } from '../utils/SafetyChecker.js';
+import { isSafeUID, isSafeName, isSafeText, isSafeType, isHost, isNumber, isSafeValue, isSafeContext, isSafeUIDWithEmptyStringAcceptance, isHostWithEmptyStringAcceptance, isNumberWithEmptyStringAcceptance, isSafeEvent, isSafeAccess, isSafeActionType, isSafeContextHost } from '../utils/SafetyChecker.js';
 import logger from '../utils/logger.js';
 import fs from 'fs/promises';
 import { checkFormat } from '../utils/FormatChecker.js';
@@ -105,7 +105,7 @@ export default class App {
 
     extractTabacRules(){
         logger.info('Extracting tabac rules',true)
-        this.tabac = new TabacManager(this.tabacFilePath);
+        this.tabac = new TabacManager(this.tabacFilePath, this.configuration);
         this.tabac.extractTabacRules();
         logger.info('Tabac rules extracted',true)
     }
@@ -168,7 +168,7 @@ export default class App {
                 checkFormat(rule.name, isSafeName, IncorrectJsonStructureError, `The name field in the tabac-rules file is incorrectly defined`, this.appPath)&&
                 checkFormat(rule.description, isSafeText, IncorrectJsonStructureError, `The description field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
                 rule.when && 
-                checkFormat(rule.when.event, isSafeName, IncorrectJsonStructureError, `The when-event field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
+                checkFormat(rule.when.event, isSafeEvent, IncorrectJsonStructureError, `The when-event field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
                 checkFormat(rule.when.context, isSafeContext, IncorrectJsonStructureError, `The when-context field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
                 rule.when.value){
 
@@ -181,32 +181,10 @@ export default class App {
                 }
 
                 rule.condition.forEach(condition => {
-                    if (
-                        checkFormat(condition.name, isSafeName, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
-                        checkFormat(condition.description, isSafeText, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
-                        condition.if &&
-                        checkFormat(condition.if.event, isSafeName, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
-                        checkFormat(condition.if.context, isSafeContext, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath)
-                    ){
-                        if(Array.isArray(condition.if.value)){
-                            condition.if.value.forEach(value => {
-                                checkFormat(value, isSafeValue, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath)
-                            })
-                        }else{
-                            checkFormat(condition.if.value, isSafeValue, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath)
-                        }
-                    }
+                    this.checkCondition(condition, rule.name);
                 });
                 rule.then.forEach(then => {
-                    if (
-                        checkFormat(then.access, isSafeName, IncorrectJsonStructureError, `The then field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
-                        checkFormat(then.type, isSafeType, IncorrectJsonStructureError, `The then field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath) &&
-                        then.context &&
-                        checkFormat(then.context.period, isNumber, IncorrectJsonStructureError, `The then field in the tabac-rules/${rule.name} file is incorrectly defined`, this.appPath)
-                    ){
-
-                    }
-
+                    this.checkThen(then, rule.name);
                 })
             }else{
                 throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined : ${this.appName}`)
@@ -214,6 +192,55 @@ export default class App {
         });
         logger.info('Tabac file ok',true)
         return true
+    }
+
+    checkCondition(condition, rulename){
+        if (
+            checkFormat(condition.name, isSafeName, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath) &&
+            checkFormat(condition.description, isSafeText, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath) &&
+            condition.if &&
+            checkFormat(condition.if.event, isSafeEvent, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath) &&
+            checkFormat(condition.if.context, isSafeContext, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
+        ){
+            if(Array.isArray(condition.if.value)){
+                condition.if.value.forEach(value => {
+                    checkFormat(value, isSafeValue, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
+                })
+            }else{
+                checkFormat(condition.if.value, isSafeValue, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
+            }
+        }else{
+            throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined check condition.if : ${this.appName}`)
+        }
+    }
+
+    checkThen(then, rulename){
+        if (
+            checkFormat(then.access, isSafeName, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath) &&
+            checkFormat(then.type, isSafeActionType, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath) &&
+            then.context
+        ){
+            if (!(then.type.toLowerCase() !== 'flow' && then.context.period && checkFormat(then.context.period, isNumber, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath))){
+                throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.period : ${this.appName}`);
+            }
+            if (!(then.type.toLowerCase() === 'flow' && then.context.pass_to && checkFormat(then.context.pass_to, isSafeName,IncorrectJsonStructureError,`The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath))){
+                throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.pass_to : ${this.appName}`);
+            }
+            if (then.access.toLowerCase() === 'networkclient' && then.context.host){
+                if (Array.isArray(then.context.host)){
+                    then.context.host.forEach(value => {
+                        checkFormat(value, isSafeContextHost, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
+                    });
+                }else{
+                    checkFormat(then.context.host, isSafeContextHost, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
+                }
+            }else{
+                throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.pass_to : ${this.appName}`);
+            }
+        
+        }else{
+            throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.host : ${this.appName}`)
+        }
     }
     
     /**

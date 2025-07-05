@@ -26,6 +26,11 @@ export function isSafeType(type){
     return safeRegex.test(type);
 }
 
+export function isSafeActionType(type){
+    const accessTypes = ['service','device','flow','stream','system'];
+    return accessTypes.includes(type.toLowerCase());
+}
+
 export function isSafeValue(value){
     const safeRegex = /^[a-zA-Z0-9 .\-_,/:]+$/;
     return safeRegex.test(value) && !value.includes('..');
@@ -42,6 +47,18 @@ export function isSafeContext(context){
     ];
     return contexts.includes(context.toLowerCase());
 }
+
+export function isSafeEvent(event){
+    const safeRegex = /^(mqtt\.|system\.)[a-zA-Z0-9_\/]*$/;
+    return safeRegex.test(event)
+}
+
+
+export function isSafeContextHost(host){
+    const safeRegex = /^(@[a-zA-Z0-9._\-]+)$/;
+    return safeRegex.test(host)
+}
+
 export function isSafeText(text){
     const safeRegex = /^[a-zA-Z0-9 .\-_,]+$/;
     return safeRegex.test(text) && !text.includes('..');
@@ -66,4 +83,3 @@ export function isHostWithEmptyStringAcceptance(text){
     const safeRegex = /^[a-zA-Z0-9.\-/]+$/;
     return safeRegex.test(text) || text === '';
 }
-

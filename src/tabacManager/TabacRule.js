@@ -1,13 +1,16 @@
 import TabacTrigger from './TabacTrigger.js'
 import TabacAction from './TabacAction.js'
 import TabacCondition from './TabacCondition.js'
+import { type } from 'node:os';
 
 export default class TabacRule {
     // CHANGED (ANY TO ANY or X TO Y) - UPDATED - CONTAINS - CONTAINS ANY - EQUALS - HIGHER THAN - HIGHER OR EQUALS THAN - LOWER THAN - LOWER OR EQUAL THAN
     constructor(name,triggers,conditions,actions ) { // default context value if not provided
         this.name = name;
         this.triggers = new TabacTrigger(triggers['event'],triggers['context'],triggers['value']);
+        /** @type {Array<TabacAction>} */
         this.actions = []
+        /** @type {Array<TabacCondition>} */
         this.conditions = []
 
         conditions.forEach(condition => {
@@ -15,7 +18,20 @@ export default class TabacRule {
         });
         
         actions.forEach(action => {
-            this.actions.push( new TabacAction(action['access'],action['type'],action['context'], action['context']['period']));
+            this.actions.push( new TabacAction(action['access'],action['type'],action['context']));
         });
+    }
+
+    /**
+     * Link device and/or server reference with the correct thing uid/host.
+     * @param {Configuration} configuration 
+     */
+    linkEntityReferences(configuration){
+        this.conditions.forEach(condition => {
+            condition.linkEntityReferences(configuration);
+        })
+        this.actions.forEach(action => {
+            action.linkEntityReferences(configuration);
+        })
     }
 }
