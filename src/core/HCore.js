@@ -9,7 +9,7 @@ import OpenhabAPI from '../openhabAPI/OpenhabAPI.js';
 import MqttAdmin from '../mqtt/MqttAdmin.js'
 import * as dotenv from "dotenv";
 import { createJWT } from '../utils/jwtUtil.js';
-import { getHubosTopicFromModule, getItemNameFromModule, getRoleFromModule, replaceDashesWithUnderscores, getRuleUID } from '../utils/NameUtil.js';
+import { getHubosTopicFromModule, getItemNameFromModule, getRoleFromModule, replaceDashesWithUnderscores, getRuleUID, getModuleAuthTopic } from '../utils/NameUtil.js';
 dotenv.config({});
 
 
@@ -49,7 +49,7 @@ export default class HCore{
     async resetAll(databaseDir){
         await db.setupDatabase().catch(()=>{})
         await this.appManager.getAllModulesUID().then(async (modulesUID) => {
-            modulesUID.forEach(async (moduleUID) => {
+            await modulesUID.forEach(async (moduleUID) => {
                 logger.info(`removing module with uid : ${modulesUID} from system`,true)
                 // stop + remove all container
                 await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
@@ -71,12 +71,13 @@ export default class HCore{
             let appId = temp.appId;
             for (let module of temp.getModules()){
                 const itemName = getItemNameFromModule(module.moduleId);
-                this.openhabAPI.removeItem(itemName);
-                this.openhabAPI.removeLink(itemName);
+                await this.openhabAPI.removeLink(itemName).catch(() => {});
+                await this.openhabAPI.removeItem(itemName).catch(() => {});
+                await this.openhabAPI.removeTopicChannel(getItemNameFromModule(module.moduleId))
             }
             for (let tabacRule of temp.tabac.tabacRules.tabacRules){
                 const uid = getRuleUID(replaceDashesWithUnderscores(appId),tabacRule.name);
-                this.openhabAPI.removeRule(uid);
+                await this.openhabAPI.removeRule(uid).catch(() => {});
             }
 
         }
@@ -116,7 +117,7 @@ export default class HCore{
                 const topicItem = await this.openhabAPI.createTopicItem(getItemNameFromModule(module.moduleId),getItemNameFromModule(module.moduleId));
                 const topicChannel = await this.openhabAPI.createTopicChannel(getHubosTopicFromModule(module.moduleId), getItemNameFromModule(module.moduleId));
                 const linkItem = await this.openhabAPI.linkItemToChannel(getItemNameFromModule(module.moduleId))
-                
+                this.mqttAdmin.subscribeToAuthTopic(getModuleAuthTopic(module.moduleId))
             }
             if (!app.app.appExist){
                 let openhabRules = app.app.openhabRules;
@@ -138,10 +139,6 @@ export default class HCore{
             
         }
         console.log('petit test')
-    }
-
-    async sendOpenhabRule(){
-        
     }
 
     async resetContainers(){

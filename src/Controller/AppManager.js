@@ -73,7 +73,7 @@ export default class AppManager {
         let appExist = false;
         if (await this.doesAppExist(appName, appPath)){
             appExist = true;
-            newApp = this.extractAppFromDB(appName,newApp);
+            newApp = await this.extractAppFromDB(appName,newApp);
         }else{
             logger.info('No occurence of the app in the DB. Starting extraction')
             await newApp.checkApp(appName);

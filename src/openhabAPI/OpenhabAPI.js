@@ -55,7 +55,6 @@ export default class OpenhabAPI {
     async removeItem(itemName){
         try {
             const url = `${this.baseUrl}/items/${itemName}`
-            console.log(url)
             const response = await axios.delete(url, {
                     headers: {
                     'Authorization': this.basicAuth,
@@ -64,11 +63,7 @@ export default class OpenhabAPI {
             });
             return response.data;
         } catch (error) {
-            if (error.response && error.response.status === 404) {
-                return 'not found';
-            } else {
-                throw new OpenhabApiError('Error OpenHAB:', error);
-            }
+            throw new OpenhabApiError('Error OpenHAB:', error);
         }
     }
 
@@ -84,11 +79,7 @@ export default class OpenhabAPI {
             });
             return response.data;
         } catch (error) {
-            if (error.response && error.response.status === 404) {
-                return 'not found';
-            } else {
-                throw new OpenhabApiError('Error OpenHAB:', error);
-            }        
+            throw new OpenhabApiError('Error OpenHAB:', error);     
         }
     }
 
@@ -103,11 +94,7 @@ export default class OpenhabAPI {
             });
             return response.data;
         } catch (error) {
-            if (error.response && error.response.status === 404) {
-                return 'not found';
-            } else {
-                throw new OpenhabApiError('Error OpenHAB:', error);
-            }
+            throw new OpenhabApiError('Error OpenHAB:', error);
         }
     }
 
@@ -185,6 +172,38 @@ export default class OpenhabAPI {
             console.error('Erreur OpenHAB:', error.response?.data || error.message);
         }
     }
+
+    async removeTopicChannel(moduleId){
+        try {
+            const moduleName = replaceDashesWithUnderscores(moduleId);
+            const url = `${this.baseUrl}/things/${this.brokerThingUID}`;
+            const channelUID = `${this.brokerThingUID}:${moduleName}`;
+            const brokerThing = await this.getBrokerThing();
+
+            const channels = brokerThing.channels;
+            
+            for (let i=0; i< channels.length;i++){
+                if (channels[i].uid === channelUID){
+                    channels.splice(i, 1);
+                    break;
+                }
+            }
+
+            const bodyData = JSON.stringify({channels});
+
+            const response = await axios.put(url,bodyData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': this.basicAuth,
+                    'Accept': '*/*'
+                }
+            });
+            return response.data
+        } catch (error) {
+            console.error('Erreur OpenHAB:', error.response?.data || error.message);
+        }
+    }
+
 
     async createTopicItem(moduleId, appName){
         try {

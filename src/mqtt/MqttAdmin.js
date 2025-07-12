@@ -40,8 +40,13 @@ export default class MqttClient{
     manageReceivedMessage(topic, message){
         if (topic === `${this.adminTopic}/response`){
             const response = JSON.parse(message);
-            logger.info(`message received on ${topic} : ${response.responses[0].command}`);
+            logger.info(`message received on ${topic} : ${response}`);
         }
+    }
+
+    manageAuthMessage(topic, message){
+        const response = JSON.parse(message);
+        logger.info(`auth message received on ${topic} : ${message}`);
     }
 
     disconnect() {
@@ -60,6 +65,17 @@ export default class MqttClient{
         await this.admin.subscribe(`${this.adminTopic}/#`);
         this.admin.on('message', (topic, message) => {
             this.manageReceivedMessage(topic, message);
+        });
+    }
+
+    async subscribeToAuthTopic(topic){
+        if (!this.admin || !this.admin.connected) {
+            logger.error('Client MQTT not connected.',true);
+            throw new MqttError('Client MQTT not connected');
+        }
+        await this.admin.subscribe(`${topic}/#`);
+        this.admin.on('message', (topic, message) => {
+            this.manageAuthMessage(topic, message);
         });
     }
 
