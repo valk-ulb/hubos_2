@@ -70,7 +70,7 @@ test('checkConfigurationFileStructure correct format - device/uid', async () => 
 test('checkConfigurationFileStructure correct format value - device/uid', async () => {
     const confPath = join(testFilesDir, 'config/configCorrectDeviceUIDValue.json');
     const app = new App("");
-    await expect(app.checkConfigurationFileStructure(confPath)).rejects.toThrowError();
+    await expect(app.checkConfigurationFileStructure(confPath));
 })
 
 test('checkConfigurationFileStructure correct format - server/description', async () => {

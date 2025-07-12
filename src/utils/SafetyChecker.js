@@ -32,7 +32,7 @@ export function isSafeActionType(type){
 }
 
 export function isSafeValue(value){
-    const safeRegex = /^[a-zA-Z0-9 .\-_,/:]+$/;
+    const safeRegex = /^[a-zA-Z0-9 ?*.\-_,/:]+$/;
     return safeRegex.test(value) && !value.includes('..');
 }
 
@@ -41,18 +41,21 @@ export function isSafeContext(context){
         'changed','updated','between','contains',
         'contains any','equals','equals any','higher or equals',
         'higher','lower or equals','lower',
-        'not changed','not updated','not between','not contains',
-        'not contains any','not equals','not equals any','not higher or equals',
-        'not higher','not lower or equals','not lower',
+        'not equals','not higher or equals',
+        'not higher','not lower or equals','not lower', 'genericcrontrigger', 'timeofdaytrigger', 
+        'datetimetriggertimeonly', 'datetimetrigger'
     ];
     return contexts.includes(context.toLowerCase());
 }
 
 export function isSafeEvent(event){
-    const safeRegex = /^(mqtt\.|system\.)[a-zA-Z0-9_\/]*$/;
+    const safeRegex = /^(mqtt\.|system\.|device\.)[a-zA-Z0-9_\/]*$/;
     return safeRegex.test(event)
 }
 
+export function isSafeCron(cron){
+    
+}
 
 export function isSafeContextHost(host){
     const safeRegex = /^(@[a-zA-Z0-9._\-]+)$/;
@@ -82,4 +85,8 @@ export function isHost(text){
 export function isHostWithEmptyStringAcceptance(text){
     const safeRegex = /^[a-zA-Z0-9.\-/]+$/;
     return safeRegex.test(text) || text === '';
+}
+
+export function isSafePassToValue(text){
+    const safeRegex = /^[a-zA-Z0-9.\- _\//]+$/;
 }

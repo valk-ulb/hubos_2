@@ -335,7 +335,7 @@ export default class MqttClient{
     async publish(payload, exceptedCommand){
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
-                this.client.removeListener('message', onMessage);
+                this.admin.removeListener('message', onMessage);
                 reject(new MqttError('Timeout waiting for getClient response'));
             }, 10000);
 
@@ -346,9 +346,9 @@ export default class MqttClient{
                     if (response.responses && response.responses[0] && response.responses[0].command === exceptedCommand){
                         if (response.responses[0].error ){
                             if (response.responses[0].error.toString().includes('already exists')){
-                                reject(new MqttAlreadyExistError(`Error trying ${exceptedCommand} -- not necessarily a runtime error`, response.responses[0].error.toString()))
+                                logger.error(`Error trying ${exceptedCommand} -- not necessarily a runtime error`, true, response.responses[0].error.toString());
                             }else if (response.responses[0].error.toString().includes('not found')){
-                                reject(new MqttNotFoundError(`Error trying ${exceptedCommand} -- not necessarily a runtime error`, response.responses[0].error.toString()))  
+                                logger.error(`Error trying ${exceptedCommand} -- not necessarily a runtime error`,true, response.responses[0].error.toString());
                             }
                             else{
                                 reject(new MqttError(`Error trying ${exceptedCommand}`, response.responses[0].error.toString()))
@@ -370,7 +370,7 @@ export default class MqttClient{
                 (err) => {
                     if (err) {
                         clearTimeout(timeout);
-                        this.client.removeListener('message', onMessage);
+                        this.admin.removeListener('message', onMessage);
                         reject(new MqttError(`Error trying ${exceptedCommand}`,err));              
                     }else{
                         logger.info(`Command ${exceptedCommand} send`)

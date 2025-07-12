@@ -46,9 +46,9 @@ test('isSafeContext correct input', () => {
         'changed','updated','between','contains',
         'contains any','equals','equals any','higher or equals',
         'higher','lower or equals','lower',
-        'not changed','not updated','not between','not contains',
-        'not contains any','not equals','not equals any','not higher or equals',
-        'not higher','not lower or equals','not lower',
+        'not equals','not higher or equals',
+        'not higher','not lower or equals','not lower', 'GenericCronTrigger', 'TimeOfDayTrigger', 
+        'DateTimeTriggerTimeOnly', 'DateTimeTrigger'
     ];
     contexts.forEach(context => {
         expect(isSafeContext(context)).toBeTruthy();    
@@ -60,9 +60,9 @@ test('isSafeContext incorrect input', () => {
         'changed','updated','between','contains',
         'contains any','equals','equals any','higher or equals',
         'higher','lower or equals','lower',
-        'not changed','not updated','not between','not contains',
-        'not contains any','not equals','not equals any','not higher or equals',
-        'not higher','not lower or equals','not lower',
+        'not equals','not equals any','not higher or equals',
+        'not higher','not lower or equals','not lower', 'GenericCronTrigger', 'TimeOfDayTrigger', 
+        'DateTimeTriggerTimeOnly', 'DateTimeTrigger'
     ];
     contexts.forEach(context => {
         expect(isSafeContext(context+'NO')).toBeFalsy();    

@@ -3,34 +3,20 @@
         "name":"rule_example_1",
         "description": "rule example contains any",
         "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "contains any",
-            "value": ["event1","event2"]
+            "event": "mqtt.test1",
+            "context": "updated",
+            "value": "event1"
         },
         "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
         ],
         "then": [
             {
                 "access": "NetworkClient",
                 "type": "service",
                 "context": {
-                    "period": "5"
-                }
-            },
-            {
-                "access":"camera_x",
-                "type": "thing",
-                "context":{
-                    "period":"5"
+                    "period": "600",
+                    "host":"all",
+                    "concern":"test1_service"
                 }
             }
         ]

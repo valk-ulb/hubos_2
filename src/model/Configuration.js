@@ -8,7 +8,9 @@ export default class Configuration{
     
     constructor(){
         this.id = null;
+        /** @type {Array<Device>} */
         this.devices = [];
+        /** @type {Array<Server>} */
         this.servers = [];
     }
 
@@ -29,7 +31,6 @@ export default class Configuration{
      * @param {any} configurationData - JSON parse of configuration file 
      */
     extractDevices(configurationData){
-        console.log(configurationData)
         const devices = configurationData.configuration.devices;
         Object.keys(devices).forEach((deviceName) => {
             const deviceConfig = devices[deviceName];

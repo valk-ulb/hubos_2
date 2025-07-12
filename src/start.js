@@ -29,15 +29,6 @@ const __databaseDir = join(__rootDirname, './database')
 logger.info(`root directory = ${__rootDirname}`)
 
 
-
-let openhabAPI = new OpenhabAPI();
-
-// MQTT admin connect
-let mqttAdmin = new MqttAdmin();
-
-await mqttAdmin.connect();
-await mqttAdmin.subscribeToAdminTopic();
-
 // Configure proxy
 // const p = new Hproxy();
 // p.configureForwardProxy();
@@ -45,6 +36,7 @@ await mqttAdmin.subscribeToAdminTopic();
 
 // App manager
 const hcore = new HCore(__rootDirname);
+await hcore.initMqtt();
 
 program
     .description('reset all')
@@ -52,86 +44,21 @@ program
     .option('-d, --debug','Debug mode')
     .action(async (options) => {
         process.env.NODE_ENV = options.debug ? 'dev' : 'production';
-        await db.setupDatabase().catch(()=>{})
-        await hcore.appManager.getAllModulesUID().then(async (modulesUID) => {
-            modulesUID.forEach(async (moduleUID) => {
-                logger.info(`removing module with uid : ${modulesUID} from system`,true)
-                // stop + remove all container
-                await hcore.sandboxManagerstopAndRemoveContainer(`${moduleUID}:latest`).catch(() => {});
-                await hcore.sandboxManagerremoveImage(`${moduleUID}:latest`).catch(() => {});
-                await hcore.sandboxManagerstopAndRemoveContainer(`${moduleUID}`).catch(() => {});
-                await hcore.sandboxManagerremoveImage(`${moduleUID}`).catch(() => {});
-                // remove client mqtt
-                await mqttAdmin.disableClient(moduleUID).catch(() => {});
-                await mqttAdmin.deleteClient(moduleUID).catch(() => {});
-                await mqttAdmin.deleteRole(`role-${moduleUID}`).catch(() => {});
-            })
-        })
-        .catch(()=>{});
-        
-        // remove admin mqtt 
-        await mqttAdmin.disableClient("hubosClient").catch(() => {});
-        await mqttAdmin.deleteClient("hubosClient").catch(() => {});
-        await mqttAdmin.deleteRole(`hubos`).catch(() => {});
-        await mqttAdmin.disableClient("openhabClient").catch(() => {});
-        await mqttAdmin.deleteClient("openhabClient").catch(() => {});
-        await mqttAdmin.deleteRole(`openHab`).catch(() => {});
-
-        // erase db tables
-        await db.dropTables();
-        await db.setupDatabase();
-        await db.setupExtension();
-        await db.initDB(__databaseDir);
+        await hcore.resetAll(__databaseDir);
     });
 
 program
     .description('HubOS start + configure')
     .command('start')
     .option('-d, --debug','Debug mode')
+    .option("-r, --reset", "reset all data and run")
     .action(async (options) => {
         process.env.NODE_ENV = options.debug ? 'dev' : 'production';
         logger.info(`database directory: ${__databaseDir}`)
-
-        await db.setupDatabase().catch(()=>{})
-        await db.setupExtension().catch(()=>{});
-        await db.initDB(__databaseDir).catch(()=>{});
-
-        await mqttAdmin.createSupervisorRole('hubos').catch(()=>{});
-        await mqttAdmin.createSupervisorRole('openHab').catch(()=>{});
-        await mqttAdmin.createClient('hubosClient','hubosClient','','hubos client',['hubos']).catch(()=>{})
-        await mqttAdmin.createClient('openhabClient','openhabClient','','openHab client',['openHab']).catch(()=>{})
-        const brokerThing = await openhabAPI.getBrokerThing();
-
-        await hcore.extractApps();
-        hcore.getApps().forEach(async (app) => {
-            await app.manifestModules.forEach(async (module) => {
-                logger.info(`mqtt configuration for module ${module.moduleId}`,true)
-                await mqttAdmin.createModuleRole(module.moduleId, `role-${module.moduleId}`);
-                await mqttAdmin.createClient(module.moduleId, module.moduleId, module.moduleId, `client module: ${module.moduleId}`,[`role-${module.moduleId}`]);
-
-                logger.info(`openhab configuration for module ${module.moduleId}`,true)
-                const topicItem = await openhabAPI.createTopicItem(`item_${module.moduleId}`,`item_${module.moduleId}`);
-                const topicChannel = await openhabAPI.createTopicChannel(`hubos/topic-${module.moduleId}`, `item_${module.moduleId}`);
-                const linkItem = await openhabAPI.linkItemToChannel(`item_${module.moduleId}`)
-                
-                logger.info(`sanbox creation and run for module ${module.moduleId}`,true);
-                const tokens = createJWT(module.moduleId);
-                const pack = await hcore.sandboxManagerbuildTarStream(join(app.appPath, module.moduleName),app.configPath, tokens)
-                await hcore.sandboxManagerbuildImageWithTar(pack, module.moduleId)
-                let cont = await hcore.sandboxManagercreateContainer(module.moduleId)
-                hcore.sandboxManagerstartContainer(cont);
-                logger.info('sanbox creation and start is a success',true)
-            });
-        })
-    });
-
-program
-    .description("HubOS run")
-    .command('run')
-    .option("-d, --debug", "Debug mode")
-    .option("-r, --reset", "reset all data and run")
-    .action(async (options) => {
-        process.env.NODE_ENV = options.debug ? 'production' : 'dev';
+        if (options.reset){
+            await hcore.resetAll(__databaseDir);
+        }
+        await hcore.run(__databaseDir);
     });
 
 program.parse();

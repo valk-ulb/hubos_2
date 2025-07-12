@@ -16,19 +16,20 @@ export default class AppDao {
             await client.query('BEGIN');
             const app_id = await this.insertApp(app, client);
             app.setID(app_id);
-            app.manifestModules.forEach(async module => {
+            await app.manifestModules.forEach(async module => {
                 const moduleId = await this.insertModule(module, app_id, app.appName ,client);
                 module.setID(moduleId);
             });
-            app.configuration.devices.forEach(async (device) => {
+            await app.configuration.devices.forEach(async (device) => {
                 const appDevicesId = await this.insertAppDevice(device, app_id, app.appName, client);
                 device.setID(appDevicesId);
             });
-            app.configuration.servers.forEach(async server => {
+            await app.configuration.servers.forEach(async server => {
                 const appServersId = await this.insertAppServer(server, app_id, app.appName, client);
                 server.setID(appServersId);
             });
             await client.query('COMMIT');
+            return app;
         } catch (err) {
             await client.query('ROLLBACK');
             throw new DatabaseError('Error while adding a new app : ', err);
@@ -239,16 +240,23 @@ export default class AppDao {
         }
     }
 
+    async getAllApps(){
+        
+    }
+
     async getAllAppsName(){
         try {
             const queryText = `
-            SELECT name 
+            SELECT name, id 
             FROM app;
             `;
             const {rows} = await db.pool.query(queryText);
             if (rows.length > 0){
                 var res = []
-                rows.forEach((r) => res.push(r.name));
+                rows.forEach((r) => res.push({
+                    name: r.name,
+                    id: r.id
+                }));
                 return res;
             }
             return [];

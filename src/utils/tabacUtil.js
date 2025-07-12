@@ -18,13 +18,3 @@ export function getEventWithoutPrefix(event,isMqtt){
         return event.slice(7);
     }
 }
-
-/**
- * return true if the then.access is a reference to a device or server.
- * @param {String} access then.access
- * @returns true if start with a @ 
- */
-export function isActionAccessAReference(access){
-    return access.startsWith('@');
-}
-

@@ -1,13 +1,15 @@
 import axios from 'axios';
 import base64 from 'base-64'
 import OpenhabApiError from '../error/OpenhabApiError.js'
+import util from 'util'
+import { getRuleUID, replaceDashesWithUnderscores, replaceUnderscoresWithDashes } from '../utils/NameUtil.js';
 export default class OpenhabAPI {
     constructor() { // default context value if not provided
        this.websocketUrl = `ws[s]://${process.env.OPENHAB_URL}:8443/ws?accessToken=${process.env.API_TOKEN}`
        this.baseUrl = `http://${process.env.OPENHAB_URL}:${process.env.OPENHAB_PORT}/rest`
        this.basicAuth = 'Basic ' + Buffer.from(`${process.env.API_TOKEN}:`).toString('base64');
        this.brokerThingUID = process.env.MQTT_BROKER_THING_UID;
-       this.prefix = 'MQTT_Broker_Hubos_';
+       //this.prefix = 'MQTT_Broker_Hubos_';
        this.rulePrefix = 'Hubos_Rule_';
         // this.frame = fr.getImageSample();
     }
@@ -50,11 +52,70 @@ export default class OpenhabAPI {
         }
     }
 
+    async removeItem(itemName){
+        try {
+            const url = `${this.baseUrl}/items/${itemName}`
+            console.log(url)
+            const response = await axios.delete(url, {
+                    headers: {
+                    'Authorization': this.basicAuth,
+                    'Accept': 'application/json'
+                    }
+            });
+            return response.data;
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                return 'not found';
+            } else {
+                throw new OpenhabApiError('Error OpenHAB:', error);
+            }
+        }
+    }
+
+    async removeLink(itemName){
+        try {
+            const url = `${this.baseUrl}/links/${itemName}`
+            console.log(url)
+            const response = await axios.delete(url, {
+                    headers: {
+                    'Authorization': this.basicAuth,
+                    'Accept': 'application/json'
+                    }
+            });
+            return response.data;
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                return 'not found';
+            } else {
+                throw new OpenhabApiError('Error OpenHAB:', error);
+            }        
+        }
+    }
+
+    async removeRule(ruleUID){
+        try {
+            const url = `${this.baseUrl}/rules/${ruleUID}`
+            const response = await axios.delete(url, {
+                    headers: {
+                    'Authorization': this.basicAuth,
+                    'Accept': 'application/json'
+                    }
+            });
+            return response.data;
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                return 'not found';
+            } else {
+                throw new OpenhabApiError('Error OpenHAB:', error);
+            }
+        }
+    }
+
     async linkItemToChannel(moduleId){
         try {
-            const moduleName = this.replaceDashesWithUnderscores(moduleId);
+            const moduleName = replaceDashesWithUnderscores(moduleId);
             const channelUid = `${this.brokerThingUID}:${moduleName}`
-            const itemName = `${this.prefix}${moduleName}`
+            const itemName = moduleName //`${this.prefix}${moduleName}`
             const url = `${this.baseUrl}/links/${itemName}/${channelUid}`
 
             const bodyData = JSON.stringify({
@@ -82,7 +143,7 @@ export default class OpenhabAPI {
 
     async createTopicChannel(topic, moduleId){
         try {
-            const moduleName = this.replaceDashesWithUnderscores(moduleId);
+            const moduleName = replaceDashesWithUnderscores(moduleId);
             const url = `${this.baseUrl}/things/${this.brokerThingUID}`;
             const newChannelUID = `${this.brokerThingUID}:${moduleName}`;
             const brokerThing = await this.getBrokerThing();
@@ -127,17 +188,17 @@ export default class OpenhabAPI {
 
     async createTopicItem(moduleId, appName){
         try {
-            const moduleName= this.replaceDashesWithUnderscores(moduleId);
+            const moduleName= replaceDashesWithUnderscores(moduleId);
             const url = `${this.baseUrl}/items`
         
             const item = [{
                 type: "String",
-                name: `${this.prefix}${moduleName}`,
+                name: moduleName,//`${this.prefix}${moduleName}`,
                 label: moduleName,
                 category: 'hubos',
                 tags: [
                     "Hubos",
-                    this.replaceDashesWithUnderscores(appName),
+                    replaceDashesWithUnderscores(appName),
                     'Point'
                 ],
                 groupNames: [],
@@ -168,11 +229,11 @@ export default class OpenhabAPI {
         }
     }
 
-    async createRule(appName, moduleId, triggers, conditions, actions){
-        const uid = this.generateUID();
-        const moduleName = this.replaceDashesWithUnderscores(moduleId);
+    async createRule(appName, appId,rulename, triggers, conditions, actions){
+        const moduleName = replaceDashesWithUnderscores(appId);
+        const uid = getRuleUID(moduleName,rulename)
         try {
-            const rule =
+            const tarRule =
                 {
                   status: {
                     status: "IDLE",
@@ -193,8 +254,8 @@ export default class OpenhabAPI {
                   visibility: "VISIBLE"
                 }
 
-
-            const response = await axios.post(`${this.baseUrl}/rules`, tarRule, {
+            console.log(util.inspect(tarRule,{ showHidden: true, depth: null, colors: true }))
+            const response = await axios.post(`${this.baseUrl}/rules`, JSON.stringify(tarRule), {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': this.basicAuth,
@@ -206,14 +267,6 @@ export default class OpenhabAPI {
             console.log("Error creating rule",error.response ? error.response.data : error.message);
         }
 
-    }
-
-    replaceDashesWithUnderscores(input) {
-        return input.replace(/-/g, '_');
-    }
-
-    replaceUnderscoresWithDashes(input) {
-        return input.replace(/_/g, '-');
     }
 
     generateUID() {

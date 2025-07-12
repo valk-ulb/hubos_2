@@ -30,15 +30,37 @@ export default class AppManager {
         logger.info('Extracting all apps')
         const appsPath = await this.listAppDirectories(this.appsDirPath) 
         logger.info(`Founded apps path : ${JSON.stringify(appsPath)}`,true);
-        appsPath.forEach(pair => {
+        for (let pair of appsPath){
             try{
                 logger.info(`Extracting app : ${pair.path}`,true);
-                this.extractApp(pair.name, pair.path);
+                await this.extractApp(pair.name, pair.path);
                 logger.info(`App ${pair.path} extracted`,true);
             }catch(err){
                 logger.error(`Error while extracting the app : `,true, err)
             }
-        })
+        }
+        logger.info('All apps extracted')
+    }
+
+    async extractAppsForDelete(){
+        logger.info('Extracting all apps from db')
+        const appsPath = await this.listAppDirectories(this.appsDirPath) 
+        logger.info(`Founded apps path : ${JSON.stringify(appsPath)}`,true);
+        for (let pair of appsPath){
+            try{
+                if (await this.doesAppExist(pair.name, pair.path)){
+                    let newApp = new App(pair.path);
+                    logger.info(`Extracting app : ${pair.path}`,true);
+
+                    newApp = await this.extractAppFromDB(pair.name, newApp);
+                    logger.info(`App ${pair.path} extracted from db`,true);
+                    this.apps.push({'name':pair.name,'app': newApp, 'appExist':true});
+                }
+            }catch(err){
+                logger.error(`Error while extracting the app : `,true, err)
+            }
+        }
+        logger.info('All apps extracted')
     }
 
     /**
@@ -47,19 +69,38 @@ export default class AppManager {
      * @param {String} appPath - The app path.
      */
     async extractApp(appName, appPath){
-        let newApp = new App(appPath);
+        let newApp = new App(appPath, appName=appName);
+        let appExist = false;
         if (await this.doesAppExist(appName, appPath)){
-            newApp = await this.getAppFromDB(appName);
-            const digest = await this.getAppRuleDigestFromDB(appName);
-            if (!checkFileMD5(newApp.tabacFilePath,digest)) throw new InconsistencyError(`Error: the content of the rules.json file of ${appName} has changed`)
+            appExist = true;
+            newApp = this.extractAppFromDB(appName,newApp);
         }else{
+            logger.info('No occurence of the app in the DB. Starting extraction')
             await newApp.checkApp(appName);
             await newApp.extractApp();
-            await newApp.extractTabacRules();
-            await this.insertAppToDB(newApp);
+            newApp.extractTabacRules();
+            newApp = await this.insertAppToDB(newApp);
             await this.updateAppWithRuleMD5(newApp, newApp.tabacFilePath)
+            newApp.linkEntityReferences();
+            newApp.getDecodedRules(process.env.MQTT_BROKER_THING_UID);
         }
-        this.apps.push({'name':appName,'app': newApp});
+        this.apps.push({'name':appName,'app': newApp, 'appExist':appExist});
+    }
+
+    async extractAppFromDB(appName, newApp){
+        logger.info(`App already exist in the DB`,true);
+        newApp = await this.getAppFromDB(appName);
+        const digest = await this.getAppRuleDigestFromDB(appName);
+        logger.info('Checking tabac file integrity')
+        if (!checkFileMD5(newApp.tabacFilePath,digest)){
+            throw new InconsistencyError(`Error: the content of the rules.json file of ${appName} has changed`)
+        }
+        else{
+            newApp.extractTabacRules();
+            newApp.linkEntityReferences();
+            logger.info('Everything is ok')
+        }
+        return newApp
     }
 
     async deleteApp(app){
@@ -101,10 +142,16 @@ export default class AppManager {
 
     /**
      * Insert the new app into the db 
+     * @param {App} app 
      */
     async insertAppToDB(app){
+        logger.info('inserting app to db',true);
         const appDao = new AppDao();
-        await appDao.insertCompleteApp(app);
+        const res = await appDao.insertCompleteApp(app);
+        if (res === null){
+            throw new Error(`Error: impossible to configure this app: ${app.appName}`)
+        }
+        return res;
     }
 
     async updateAppWithRuleMD5(app, ruleFilePath){
@@ -119,6 +166,7 @@ export default class AppManager {
      * @returns App
      */
     async getAppFromDB(appName){
+        logger.info('Getting app from DB',true);
         const appDao = new AppDao();
         const moduleDao = new ModuleDao();
         const serverDao = new ServerDao();
@@ -134,6 +182,7 @@ export default class AppManager {
     }
 
     async getAppRuleDigestFromDB(appName){
+        logger.info('Getting stored rule file signature from DB')
         const appDao = new AppDao();
         const digest = await appDao.getRuleDigestByAppName(appName);
         return digest

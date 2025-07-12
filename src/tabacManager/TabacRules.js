@@ -3,6 +3,7 @@ import fs from 'fs'
 
 import TabacRule from './TabacRule.js';
 import Configuration from '../model/Configuration.js';
+import Module from '../model/Module.js';
 export default class TabacRules {
     // CHANGED (ANY TO ANY or X TO Y) - UPDATED - CONTAINS - CONTAINS ANY - EQUALS - HIGHER THAN - HIGHER OR EQUALS THAN - LOWER THAN - LOWER OR EQUAL THAN
     constructor(tabacRulePath) { // default context value if not provided
@@ -11,7 +12,7 @@ export default class TabacRules {
         const rulesFilePath = tabacRulePath;
         const rulesFile = fs.readFileSync(rulesFilePath);
         this.appTabacRules = JSON.parse(rulesFile);
-        console.log(this.appTabacRules)
+        this.openhabRules = [];
     }
 
     extractTabacRules(){
@@ -23,10 +24,22 @@ export default class TabacRules {
     /**
      * Link device and/or server reference with the correct thing uid/host.
      * @param {Configuration} configuration 
+     * @param {Array<Module>} modules
      */
-    linkEntityReferences(configuration){
+    linkEntityReferences(configuration, modules){
         this.tabacRules.forEach(tabacRule => {
-            tabacRule.linkEntityReferences(configuration);
+            console.log(`linking : ${tabacRule.name}`)
+            tabacRule.linkEntityReferences(configuration, modules);
         })
+    }
+
+    /**
+     * 
+     * @param {String} mqttBrokerUID 
+     */
+    decodeRules(mqttBrokerUID){
+        for (let tabacRule of this.tabacRules){
+            this.openhabRules.push(tabacRule.decode(mqttBrokerUID));
+        }
     }
 }

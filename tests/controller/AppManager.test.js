@@ -10,6 +10,7 @@ import Device from '../../src/model/Device.js';
 import db from "../../src/database/Database.js";
 import DatabaseError from "../../src/error/DatabaseError.js";
 import InconsistencyError from "../../src/error/InconsistencyError.js";
+import TabacManager from "../../src/tabacManager/TabacManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __rootDirname = dirname(__filename);
@@ -277,101 +278,6 @@ test('listAppDirectories return list of app directories', async () => {
     expect(result).toEqual(expected);
 })
 
-
-test('extractApp with non-existing correct app', async () => {
-    const appsDir = join(testFilesDir, 'apps');
-    const appName = "test1"
-    const appPath = join(appsDir, 'appOK');
-
-    const appManager = new AppManager(appsDir);
-    
-    const mockClient = {
-        query: vi.fn()
-        .mockResolvedValueOnce({ rows: [{ found: false }],}) // 1er appel
-        .mockResolvedValue({
-            rows: [{ id:'124e4567-e89b-12d3-a456-426614174000',name:appName,path:appPath,type:'testing',description:'Control your smart home devices with voice commands.' }],
-        }),
-        release: vi.fn()
-    };
-
-    db.pool = {
-        connect: vi.fn().mockResolvedValue(mockClient),
-        query:mockClient.query
-    };
-    
-    const exceptedApp = new App(appPath, "124e4567-e89b-12d3-a456-426614174000", appName, "Control your smart home devices with voice commands.","testing");
-    
-    
-    exceptedApp.configuration.devices = expectedDevices;
-    exceptedApp.configuration.servers = expectedServers;
-    exceptedApp.manifestModules = expectedModules;
-    await appManager.extractApp(appName,appPath);
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(1,`
-                SELECT EXISTS (
-                    SELECT 1 FROM app
-                    WHERE name = $1 AND path = $2
-                ) AS "found"`,[appName,appPath]    );
-    expect(mockClient.query).toHaveBeenNthCalledWith(2,`BEGIN`);
-    expect(mockClient.query).toHaveBeenNthCalledWith(3,`
-            INSERT INTO app (name, path, description, type)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id
-        `,[appName, appPath, "Control your smart home devices with voice commands.", "testing"]
-    );
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(4,`
-            INSERT INTO module (app_id, name, description, type)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "test1_service","little description", "service"]
-    );
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(5,`
-            INSERT INTO module (app_id, name, description, type)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "test1","little description","handler"]
-    );
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(6,`
-            INSERT INTO appDevice (app_id, name, deviceUID, description, type)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "myDeviceName","123e4567-e89b-12d3-a456-426614174000","Little description of the device for the user","myType"]
-    );
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(7,`
-            INSERT INTO appDevice (app_id, name, deviceUID, description, type)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "myDeviceName2","124e4567-e89b-12d3-a456-426614174000","Little description 2 of the device for the user","myType"]
-    );
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(8,`
-            INSERT INTO appServer (app_id, name, host, port, description)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "myServerName","www.example.com","1234","Little description of the server for the user"]
-    );
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(9,`
-            INSERT INTO appServer (app_id, name, host, port, description)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "myServerName2","www.example2.com","1234","Little description 2 of the server for the user"]
-    );
-
-    expect(mockClient.query).toHaveBeenNthCalledWith(10,`COMMIT`);
-
-    expect(mockClient.release).toHaveBeenCalled();
-
-    expect(appManager.apps[0].app).toStrictEqual(exceptedApp);
-    expect(appManager.apps[0].app.manifestModules).toStrictEqual(expectedModules);
-    expect(appManager.apps[0].app.configuration.devices).toStrictEqual(expectedDevices);
-    expect(appManager.apps[0].app.configuration.servers).toStrictEqual(expectedServers);
-})
-
 test('extractApp with non-existing correct app', async () => {
     const appsDir = join(testFilesDir, 'apps');
     const appName = "test1"
@@ -393,7 +299,9 @@ test('extractApp with non-existing correct app', async () => {
         })
         .mockResolvedValueOnce({
             rows: [{id:'124e4567-e89b-12d3-a456-426614174005',app_id:'124e4567-e89b-12d3-a456-426614174000',name:'myDeviceName',deviceUID:'223e4567-e89b-12d3-a456-426614174005',description:'Little description of the device for the user',type:'myType'},{id:'124e4567-e89b-12d3-a456-426614174006',app_id:'124e4567-e89b-12d3-a456-426614174000',name:'myDeviceName2',deviceUID:'223e4567-e89b-12d3-a456-426614174005',description:'Little description 2 of the device for the user',type:'myType'}]
-        }),
+        })
+        .mockResolvedValueOnce({rows:[{rule_file_hash: 'b3a0c5642a7295dfcbce1c816e5eefa9'}]})
+        ,
     };
 
     db.pool = mockPool
@@ -438,11 +346,18 @@ test('extractApp with non-existing correct app', async () => {
             FROM appDevice
             WHERE app_id = $1
             `,['124e4567-e89b-12d3-a456-426614174000']);
+    expect(mockPool.query).toHaveBeenNthCalledWith(6,`
+            SELECT rule_file_hash
+            FROM app
+            WHERE name = $1
+            LIMIT 1
+            `, [appName]);
     const expected = new App(appPath, "124e4567-e89b-12d3-a456-426614174000", appName, "Control your smart home devices with voice commands.","testing");
     expected.setManifestModules(tempModules)
     expected.configuration.setDevices(tempDevices)
     expected.configuration.setServers(tempServers)
-    expect(appManager.apps[0]).toEqual({'name':appName,'app':expected});
+    expected.extractTabacRules();
+    expect(appManager.apps[0]).toStrictEqual({'name':appName,'app':expected, 'appExist':true});
 })
 
 test('delete app ', async () => {
