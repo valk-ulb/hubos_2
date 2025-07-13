@@ -13,8 +13,8 @@
                 "description":"if the event occur in the morning",
                 "if":{
                     "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
+                    "context":"genericcrontrigger",
+                    "value": "0 0 8 * * ? *"
                 }
             }
         ],
@@ -23,12 +23,14 @@
                 "access": "NetworkClient",
                 "type": "service",
                 "context": {
-                    "period": "5"
+                    "period": "5",
+                    "host":"all",
+                    "concern":"test1"
                 }
             },
             {
                 "access":"camera_x",
-                "type": "thing",
+                "type": "device",
                 "contexts":{
                     "period":"5"
                 }

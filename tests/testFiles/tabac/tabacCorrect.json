@@ -13,8 +13,8 @@
                 "description":"if the event occur in the morning",
                 "if":{
                     "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
+                    "context":"genericcrontrigger",
+                    "value": "0 0 8 * * ? *"
                 }
             }
         ],
@@ -24,7 +24,8 @@
                 "type": "service",
                 "context": {
                     "period": "5",
-                    "host":"all"
+                    "host":"all",
+                    "concern":"test1"
                 }
             }
         ]
@@ -43,8 +44,8 @@
                 "description":"if the event occur in the morning",
                 "if":{
                     "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
+                    "context":"genericcrontrigger",
+                    "value": "0 0 8 * * ? *"
                 }
             }
         ],
@@ -53,268 +54,9 @@
                 "access": "NetworkClient",
                 "type": "service",
                 "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_3",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "updated",
-            "value": ["event1","event2"]
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_4",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "between",
-            "value": ["event1","event2"]
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_5",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "contains",
-            "value": "event1"
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_6",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "equals",
-            "value": "111"
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_7",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "equals any",
-            "value": ["event1","event2"]
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_8",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "higher",
-            "value": "123"
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_9",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "higher or equals",
-            "value": "11"
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_10",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "lower",
-            "value": "111"
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
-                }
-            }
-        ]
-    },
-    {
-        "name":"rule_example_11",
-        "description": "rule example contains any",
-        "when":{
-            "event": "mqtt.faceRecognition",
-            "context": "lower or equals",
-            "value": "10"
-        },
-        "condition":  [
-            {
-                "name":"if_in_the_morning",
-                "description":"if the event occur in the morning",
-                "if":{
-                    "event":"system.time",
-                    "context":"between",
-                    "value": ["00:01", "10:00"]
-                }
-            }
-        ],
-        "then": [
-            {
-                "access": "NetworkClient",
-                "type": "service",
-                "context": {
-                    "period": "5"
+                    "period": "5",
+                    "host":"all",
+                    "concern":"test1"
                 }
             }
         ]

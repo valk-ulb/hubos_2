@@ -10,7 +10,6 @@
         "servers":{
             "myServerName":{
                 "host":"myHost",
-                "port":"12DD3",
                 "description":"Little description of the server for the user"
             }
         }

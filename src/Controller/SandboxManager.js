@@ -3,9 +3,11 @@ import Docker from "dockerode";
 import logger from '../utils/logger.js'
 import SandboxError from "../error/SandboxError.js";
 import path from 'path';
-import fs from 'fs';
+import fs, { link } from 'fs';
 import tarStream from 'tar-stream'
 import hproxy from "../core/HProxy.js";
+//import hserver from "../core/Hserver.js";
+import util from 'util'
 export default class SandboxManager {
 
     /**
@@ -116,7 +118,8 @@ export default class SandboxManager {
             Env: [
                 `HTTP_PROXY=${this.proxy}`,
                 `HTTPS_PROXY=${this.proxy}`,
-                `MODULE_UID=${imageName}`
+                `MODULE_UID=${imageName}`,
+                //`HUBOS_API=${hserver.hubosServer}`
             ]
         });
         return container;
@@ -160,16 +163,13 @@ export default class SandboxManager {
 
     async stopAndRemoveContainer(imageName){
         const containers = await this.docker.listContainers({all:true})
-
         for (const c of containers){
             if (c.Image === imageName){
                 const container = this.docker.getContainer(c.Id);
-                await container.stop().catch(() => {});
+                await container.stop().catch((err) => {logger.error(`error deleting container: `,true, err)});
                 await container.remove({force:true});
 
                 const image = this.docker.getImage(c.Image);
-                console.log(image.id)
-                console.log(image.tag)
                 image.remove((err, data) => {
                     if (err) {
                         logger.error('Error trying stopping a container :',true, err);

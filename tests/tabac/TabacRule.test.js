@@ -42,7 +42,7 @@ test('tabacRule test 1 device, updated trigger', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, [], [actionTemp]);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -74,7 +74,7 @@ test('tabacRule test 1 device, updated trigger', async () => {
             id:2,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -112,7 +112,7 @@ test('tabacRule test 1 device all server, updated trigger', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, [], actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -144,7 +144,7 @@ test('tabacRule test 1 device all server, updated trigger', async () => {
             id:2,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"all\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"all\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -191,7 +191,7 @@ test('tabacRule test 1 device 1 server, updated trigger', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, [], actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -207,9 +207,7 @@ test('tabacRule test 1 device 1 server, updated trigger', async () => {
     expect(tabacRuleTemp.trigger.itemName).toBe(getItemNameFromModule('1234'))
     expect(tabacRuleTemp.actions[0].linkedDeviceUID).toBe('111');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334']);
     expect(tabacRuleTemp.actions[2].hostIp).toStrictEqual(['www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[2].hostPort).toStrictEqual(['1336']);
 
 
 
@@ -229,7 +227,7 @@ test('tabacRule test 1 device 1 server, updated trigger', async () => {
             id:2,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -267,7 +265,7 @@ test('tabacRule test 1 device 2 server, updated trigger', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, [], actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -283,7 +281,6 @@ test('tabacRule test 1 device 2 server, updated trigger', async () => {
     expect(tabacRuleTemp.trigger.itemName).toBe(getItemNameFromModule('1234'))
     expect(tabacRuleTemp.actions[0].linkedDeviceUID).toBe('111');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
 
 
 
@@ -303,7 +300,7 @@ test('tabacRule test 1 device 2 server, updated trigger', async () => {
             id:2,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -353,7 +350,7 @@ test('tabacRule test 1 device 2 server, updated trigger + condition', async () =
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, conditonTemp, actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -370,7 +367,7 @@ test('tabacRule test 1 device 2 server, updated trigger + condition', async () =
     expect(tabacRuleTemp.conditions[0].itemName).toBe(getItemNameFromModule('1235'))
     expect(tabacRuleTemp.actions[0].linkedDeviceUID).toBe('111');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
+    //expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
 
 
 
@@ -399,7 +396,7 @@ test('tabacRule test 1 device 2 server, updated trigger + condition', async () =
             id:3,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -538,7 +535,7 @@ test('tabacRule test 1 device 2 server, updated trigger + all condition', async 
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, conditonTemp, actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -561,7 +558,7 @@ test('tabacRule test 1 device 2 server, updated trigger + all condition', async 
     }
     expect(tabacRuleTemp.actions[0].linkedDeviceUID).toBe('111');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
+    //expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
 
 
 
@@ -682,7 +679,7 @@ test('tabacRule test 1 device 2 server, updated trigger + all condition', async 
             id:12,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -691,7 +688,7 @@ test('tabacRule test 1 device 2 server, updated trigger + all condition', async 
             id:13,
             configuration:{
                 topic: getModuleAuthTopic('1235'),
-                value: "[{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
+                value: "[{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -741,7 +738,7 @@ test('tabacRule test 1 device 2 server, DateTime trigger', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, conditonTemp, actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -758,7 +755,7 @@ test('tabacRule test 1 device 2 server, DateTime trigger', async () => {
     expect(tabacRuleTemp.conditions[0].itemName).toBe(getItemNameFromModule('1235'))
     expect(tabacRuleTemp.actions[0].linkedDeviceUID).toBe('111');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
+    //expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
 
 
 
@@ -787,7 +784,7 @@ test('tabacRule test 1 device 2 server, DateTime trigger', async () => {
             id:3,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -837,7 +834,7 @@ test('tabacRule test 1 device 2 server, time of day trigger', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, conditonTemp, actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -853,7 +850,7 @@ test('tabacRule test 1 device 2 server, time of day trigger', async () => {
     expect(tabacRuleTemp.conditions[0].itemName).toBe(getItemNameFromModule('1235'))
     expect(tabacRuleTemp.actions[0].linkedDeviceUID).toBe('111');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
+    //expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
 
 
 
@@ -881,7 +878,7 @@ test('tabacRule test 1 device 2 server, time of day trigger', async () => {
             id:3,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
@@ -931,7 +928,7 @@ test('tabacRule test 1 device 2 server, generic cron trigger', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, conditonTemp, actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -947,7 +944,7 @@ test('tabacRule test 1 device 2 server, generic cron trigger', async () => {
     expect(tabacRuleTemp.conditions[0].itemName).toBe(getItemNameFromModule('1235'))
     expect(tabacRuleTemp.actions[0].linkedDeviceUID).toBe('111');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
+    //expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
 
 
 
@@ -975,8 +972,7 @@ test('tabacRule test 1 device 2 server, generic cron trigger', async () => {
             id:3,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
-                config: 'myBrokerTest'
+                value: "[{\"period\":\"4\",\"type\":\"device\",\"access\":\"device1\",\"deviceUID\":\"111\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",                config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'
         }]
@@ -1025,7 +1021,7 @@ test('tabacRule test 1 device 2 server, action concern', async () => {
     }
     let tabacRuleTemp = new TabacRule('test',triggerTemp, conditonTemp, actionTemp);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1335','description','3345'),new Server('server3','www.domainServer3.be','1336','description','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description','3345'),new Server('server3','www.domainServer3.be','description','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -1041,7 +1037,7 @@ test('tabacRule test 1 device 2 server, action concern', async () => {
     expect(tabacRuleTemp.conditions[0].itemName).toBe(getItemNameFromModule('1235'))
     expect(tabacRuleTemp.actions[0].concernModuleID).toBe('1235');
     expect(tabacRuleTemp.actions[1].hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer3.be']);
-    expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
+    //expect(tabacRuleTemp.actions[1].hostPort).toStrictEqual(['1334','1336']);
 
     let openhabRule = tabacRuleTemp.decode('myBrokerTest');
     let expected = {
@@ -1077,7 +1073,7 @@ test('tabacRule test 1 device 2 server, action concern', async () => {
             id:4,
             configuration:{
                 topic: getModuleAuthTopic('1234'),
-                value: "[{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server1\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"host\":\"server3\"}]",
+                value: "[{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server1\",\"hostIp\":\"www.domainServer1.be\"},{\"period\":\"5\",\"type\":\"service\",\"access\":\"NetworkClient\",\"server\":\"server3\",\"hostIp\":\"www.domainServer3.be\"}]",
                 config: 'myBrokerTest'
             },
             type: 'mqtt.publishMQTT#26aa5ea09027ad2b11b752652e808c6a'

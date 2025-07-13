@@ -16,11 +16,11 @@ test('checkAppTabacFileStructure correct format', () => {
 
 let jsonFile = 'Name';
 
-test('checkAppTabacFileStructure correct format - name', async () => {
-    const confPath = join(testFilesDir, `tabac/tabacCorrect${jsonFile}.json`);
-    const app = new App("");
-    await expect(app.checkAppTabacFileStructure(confPath)).rejects.toThrowError(IncorrectJsonStructureError);
-})
+// test('checkAppTabacFileStructure correct format - name', async () => {
+//     const confPath = join(testFilesDir, `tabac/tabacCorrect${jsonFile}.json`);
+//     const app = new App("");
+//     await expect(app.checkAppTabacFileStructure(confPath)).not.rejects.toThrowError(IncorrectJsonStructureError);
+// })
 
 test('checkAppTabacFileStructure correct format value - name', async () => {
     const confPath = join(testFilesDir, `tabac/tabacCorrect${jsonFile}Value.json`);

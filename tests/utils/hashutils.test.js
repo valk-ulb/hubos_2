@@ -11,5 +11,5 @@ const testFilesDir = join(__rootDirname, '../testFiles');
 test('signfile', async () => {
     const tabacPath = join(testFilesDir, 'tabac/tabacCorrect.json');
     const digest = await signFileMD5(tabacPath);
-    expect(digest).toEqual('8264d4a8c103294f238167536779f8f8');
+    expect(digest).toEqual('6c1fcdc17b55e06b5224f53de9944a89');
 })

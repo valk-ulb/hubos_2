@@ -13,7 +13,9 @@
                 "access": "NetworkClient",
                 "type": "service",
                 "context": {
-                    "period": "5"
+                    "period": "5",
+                    "host":"all",
+                    "concern":"test1"
                 }
             },
             {
@@ -39,7 +41,9 @@
                 "access": "NetworkClient",
                 "type": "service",
                 "context": {
-                    "period": "5"
+                    "period": "5",
+                    "host":"all",
+                    "concern":"test1"
                 }
             },
             {
@@ -78,7 +82,9 @@
                 "access": "NetworkClient",
                 "type": "service",
                 "context": {
-                    "period": "5"
+                    "period": "5",
+                    "host":"all",
+                    "concern":"test1"
                 }
             },
             {

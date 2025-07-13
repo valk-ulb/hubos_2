@@ -7,11 +7,16 @@ async function processTriggerEvent() {
     setInterval(async () => {
         
         try{
-            axios.get('https://jsonplaceholder.typicode.com/posts/1', {
-                headers:{
-                    'Hubos-Container-ID':process.env.MODULE_UID
-                }
-            })
+            console.log("ici")
+            axios.post(`${process.env.HUBOS_API}/echo`, 
+                {
+                    message: 'Hello from axios'
+                }, 
+                {
+                    headers:{
+                        'Hubos-Container-ID':process.env.MODULE_UID
+                    }
+                })
                 .then(response => {
                     // Afficher le corps de la réponse
                     console.log('Response:', response.data);

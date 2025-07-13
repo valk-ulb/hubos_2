@@ -19,7 +19,7 @@ const testFilesDir = join(__rootDirname, '../testFiles');
 
 
 const expectedDevices = [new Device('myDeviceName','123e4567-e89b-12d3-a456-426614174000','Little description of the device for the user','myType'),new Device('myDeviceName2','124e4567-e89b-12d3-a456-426614174000','Little description 2 of the device for the user','myType')]
-const expectedServers = [new Server('myServerName','www.example.com','1234','Little description of the server for the user'), new Server('myServerName2','www.example2.com','1234','Little description 2 of the server for the user')]
+const expectedServers = [new Server('myServerName','www.example.com','Little description of the server for the user'), new Server('myServerName2','www.example2.com','Little description 2 of the server for the user')]
 const expectedModules = [new Module('test1_service','service','little description'),new Module('test1','handler','little description')]
 
 
@@ -110,7 +110,7 @@ test('getAppFromDB return app', async () => {
     db.pool = mockPool;
     const result = await appManager.getAppFromDB(appName);
     const tempDevices = [new Device('myDeviceName','223e4567-e89b-12d3-a456-426614174005','Little description of the device for the user','myType','124e4567-e89b-12d3-a456-426614174005'),new Device('myDeviceName2','223e4567-e89b-12d3-a456-426614174005','Little description 2 of the device for the user','myType','124e4567-e89b-12d3-a456-426614174006')]
-    const tempServers = [new Server('myServerName','www.example.com','1234','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','1234','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
+    const tempServers = [new Server('myServerName','www.example.com','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
     const tempModules = [new Module('test1_service','service','little description','124e4567-e89b-12d3-a456-426614174001'),new Module('test1','handler','little description','124e4567-e89b-12d3-a456-426614174002')]
 
     expect(mockPool.query).toHaveBeenNthCalledWith(1,`
@@ -125,7 +125,7 @@ test('getAppFromDB return app', async () => {
             WHERE app_id = $1
             `,['124e4567-e89b-12d3-a456-426614174000']);
     expect(mockPool.query).toHaveBeenNthCalledWith(3,`
-            SELECT id, app_id, name, host, port, description
+            SELECT id, app_id, name, host, description
             FROM appServer
             WHERE app_id = $1
             `,['124e4567-e89b-12d3-a456-426614174000']);
@@ -223,17 +223,17 @@ test('insertAppToDB return app', async () => {
     );
 
     expect(mockClient.query).toHaveBeenNthCalledWith(7,`
-            INSERT INTO appServer (app_id, name, host, port, description)
+            INSERT INTO appServer (app_id, name, host, description)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "myServerName","www.example.com","1234","Little description of the server for the user"]
+        `,["124e4567-e89b-12d3-a456-426614174000", "myServerName","www.example.com","Little description of the server for the user"]
     );
 
     expect(mockClient.query).toHaveBeenNthCalledWith(8,`
-            INSERT INTO appServer (app_id, name, host, port, description)
+            INSERT INTO appServer (app_id, name, host, description)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id
-        `,["124e4567-e89b-12d3-a456-426614174000", "myServerName2","www.example2.com","1234","Little description 2 of the server for the user"]
+        `,["124e4567-e89b-12d3-a456-426614174000", "myServerName2","www.example2.com","Little description 2 of the server for the user"]
     );
 
     expect(mockClient.query).toHaveBeenNthCalledWith(9,`COMMIT`);
@@ -307,7 +307,7 @@ test('extractApp with non-existing correct app', async () => {
     db.pool = mockPool
 
     const tempDevices = [new Device('myDeviceName','223e4567-e89b-12d3-a456-426614174005','Little description of the device for the user','myType','124e4567-e89b-12d3-a456-426614174005'),new Device('myDeviceName2','223e4567-e89b-12d3-a456-426614174005','Little description 2 of the device for the user','myType','124e4567-e89b-12d3-a456-426614174006')]
-    const tempServers = [new Server('myServerName','www.example.com','1234','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','1234','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
+    const tempServers = [new Server('myServerName','www.example.com','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
     const tempModules = [new Module('test1_service','service','little description','124e4567-e89b-12d3-a456-426614174001'),new Module('test1','handler','little description','124e4567-e89b-12d3-a456-426614174002')]
 
     
@@ -337,7 +337,7 @@ test('extractApp with non-existing correct app', async () => {
             WHERE app_id = $1
             `,['124e4567-e89b-12d3-a456-426614174000']);
     expect(mockPool.query).toHaveBeenNthCalledWith(4,`
-            SELECT id, app_id, name, host, port, description
+            SELECT id, app_id, name, host, description
             FROM appServer
             WHERE app_id = $1
             `,['124e4567-e89b-12d3-a456-426614174000']);
@@ -357,6 +357,7 @@ test('extractApp with non-existing correct app', async () => {
     expected.configuration.setDevices(tempDevices)
     expected.configuration.setServers(tempServers)
     expected.extractTabacRules();
+    expected.linkEntityReferences();
     expect(appManager.apps[0]).toStrictEqual({'name':appName,'app':expected, 'appExist':true});
 })
 
@@ -375,7 +376,7 @@ test('delete app ', async () => {
     db.pool = mockPool
 
     const tempDevices = [new Device('myDeviceName','223e4567-e89b-12d3-a456-426614174005','Little description of the device for the user','myType','124e4567-e89b-12d3-a456-426614174005'),new Device('myDeviceName2','223e4567-e89b-12d3-a456-426614174005','Little description 2 of the device for the user','myType','124e4567-e89b-12d3-a456-426614174006')]
-    const tempServers = [new Server('myServerName','www.example.com','1234','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','1234','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
+    const tempServers = [new Server('myServerName','www.example.com','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
     const tempModules = [new Module('test1_service','service','little description','124e4567-e89b-12d3-a456-426614174001'),new Module('test1','handler','little description','124e4567-e89b-12d3-a456-426614174002')]
 
     
@@ -412,7 +413,7 @@ test('delete app without been listed', async () => {
     db.pool = mockPool
 
     const tempDevices = [new Device('myDeviceName','223e4567-e89b-12d3-a456-426614174005','Little description of the device for the user','myType','124e4567-e89b-12d3-a456-426614174005'),new Device('myDeviceName2','223e4567-e89b-12d3-a456-426614174005','Little description 2 of the device for the user','myType','124e4567-e89b-12d3-a456-426614174006')]
-    const tempServers = [new Server('myServerName','www.example.com','1234','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','1234','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
+    const tempServers = [new Server('myServerName','www.example.com','Little description of the server for the user','124e4567-e89b-12d3-a456-426614174003'), new Server('myServerName2','www.example2.com','Little description 2 of the server for the user','124e4567-e89b-12d3-a456-426614174004')]
     const tempModules = [new Module('test1_service','service','little description','124e4567-e89b-12d3-a456-426614174001'),new Module('test1','handler','little description','124e4567-e89b-12d3-a456-426614174002')]
 
     

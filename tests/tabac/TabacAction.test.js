@@ -37,7 +37,7 @@ test('tabacAction test device', async () => {
     }
     let tabacActionTemp = new TabacAction(actionTemp.access,actionTemp.type,actionTemp.context,0);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -60,6 +60,7 @@ test('tabacAction test device', async () => {
         period: '4',
         type: 'device',
         access:'device1',
+        deviceUID: '111'
     }
     expect(tabacActionTemp.getAuth()).toStrictEqual(expected)
 })
@@ -74,7 +75,7 @@ test('tabacAction test device not existe', async () => {
     }
     let tabacActionTemp = new TabacAction(actionTemp.access,actionTemp.type,actionTemp.context,0);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -104,7 +105,7 @@ test('tabacAction test network client host all', async () => {
     }
     let tabacActionTemp = new TabacAction(actionTemp.access,actionTemp.type,actionTemp.context,0);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -130,7 +131,8 @@ test('tabacAction test network client host all', async () => {
         period: '4',
         type: 'service',
         access: 'NetworkClient',
-        host: 'all'
+        server: 'all',
+        hostIp: undefined
     }
     expect(tabacActionTemp.getAuth()).toStrictEqual(expected)
 })
@@ -147,7 +149,7 @@ test('tabacAction test network client specific host', async () => {
     }
     let tabacActionTemp = new TabacAction(actionTemp.access,actionTemp.type,actionTemp.context,0);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -167,13 +169,13 @@ test('tabacAction test network client specific host', async () => {
     tabacActionTemp.linkEntityReferences(conf,modules);
     expect(tabacActionTemp.linkedDeviceUID).toBe('');
     expect(tabacActionTemp.hostIp).toStrictEqual(['www.domainServer1.be']);
-    expect(tabacActionTemp.hostPort).toStrictEqual(['1334']);
     
     const expected = {
         period: '4',
         type: 'service',
         access: 'NetworkClient',
-        host: 'server1'
+        server: 'server1',
+        hostIp: 'www.domainServer1.be'
     }
     expect(tabacActionTemp.getAuth()).toStrictEqual(expected)
 })
@@ -189,7 +191,7 @@ test('tabacAction test network client specific host not exist', async () => {
     }
     let tabacActionTemp = new TabacAction(actionTemp.access,actionTemp.type,actionTemp.context,0);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -210,7 +212,7 @@ test('tabacAction test network client list of host', async () => {
     }
     let tabacActionTemp = new TabacAction(actionTemp.access,actionTemp.type,actionTemp.context,0);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1334','description2','3345'),new Server('server3','www.domainServer3.be','1334','description3','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description2','3345'),new Server('server3','www.domainServer3.be','description3','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)
@@ -230,26 +232,30 @@ test('tabacAction test network client list of host', async () => {
     tabacActionTemp.linkEntityReferences(conf,modules);
     expect(tabacActionTemp.linkedDeviceUID).toBe('');
     expect(tabacActionTemp.hostIp).toStrictEqual(['www.domainServer1.be','www.domainServer2.be','www.domainServer3.be']);
-    expect(tabacActionTemp.hostPort).toStrictEqual(['1334','1334','1334']);
+    //expect(tabacActionTemp.hostPort).toStrictEqual(['1334','1334','1334']);
     
     const expected = [
         {
             period: '4',
             type: 'service',
             access: 'NetworkClient',
-            host: 'server1'
+            server: 'server1',
+            hostIp: 'www.domainServer1.be'
         },
         {
             period: '4',
             type: 'service',
             access: 'NetworkClient',
-            host: 'server2'
+            server: 'server2',
+            hostIp: 'www.domainServer2.be'
         },
         {
             period: '4',
             type: 'service',
             access: 'NetworkClient',
-            host: 'server3'
+            server: 'server3',
+            hostIp: "www.domainServer3.be",
+
         }
     ]
     expect(tabacActionTemp.getAuth()).toStrictEqual(expected)
@@ -266,7 +272,7 @@ test('tabacAction test network client list of host and one not exist', async () 
     }
     let tabacActionTemp = new TabacAction(actionTemp.access,actionTemp.type,actionTemp.context,0);
     let devices = [new Device('device1','111','description','type1','112233')]
-    let servers = [new Server('server1','www.domainServer1.be','1334','description','3344'),new Server('server2','www.domainServer2.be','1334','description2','3345'),new Server('server3','www.domainServer3.be','1334','description3','3346')]
+    let servers = [new Server('server1','www.domainServer1.be','description','3344'),new Server('server2','www.domainServer2.be','description2','3345'),new Server('server3','www.domainServer3.be','description3','3346')]
     let conf = new Configuration()
     conf.setDevices(devices)
     conf.setServers(servers)

@@ -21,7 +21,7 @@ test('extract servers with correct format', () => {
     const confData = JSON.parse('{"configuration":{"devices":{},"servers":{"myServerName":{"host":"myHost", "port":"1234", "description":"little description for the server"}}}}')
     const configuration = new Configuration();
     configuration.extractServers(confData);
-    const expected = [new Server('myServerName','myHost','1234','little description for the server')]
+    const expected = [new Server('myServerName','myHost','little description for the server')]
     expect(configuration.servers).toMatchObject(expected);
 })
 

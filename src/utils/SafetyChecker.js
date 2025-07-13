@@ -53,10 +53,6 @@ export function isSafeEvent(event){
     return safeRegex.test(event)
 }
 
-export function isSafeCron(cron){
-    
-}
-
 export function isSafeContextHost(host){
     const safeRegex = /^[a-zA-Z0-9./_\-]+$/;
     return safeRegex.test(host)
@@ -72,6 +68,11 @@ export function isNumber(text){
     return safeRegex.test(text);
 }
 
+export function isPeriod(text){
+    const safeRegex = /^-?[0-9]+$/;
+    return safeRegex.test(text);
+}
+
 export function isNumberWithEmptyStringAcceptance(text){
     const safeRegex = /^[0-9]+$/;
     return safeRegex.test(text) || text === '';
@@ -83,7 +84,7 @@ export function isHost(text){
 }
 
 export function isHostWithEmptyStringAcceptance(text){
-    const safeRegex = /^[a-zA-Z0-9.\-/]+$/;
+    const safeRegex = /^[a-zA-Z0-9.\-_:/#]+$/;
     return safeRegex.test(text) || text === '';
 }
 

@@ -57,14 +57,14 @@ export default class TabacAction {
                         access: this.access,
                         server: this.hosts[i],
                         hostIp: this.hostIp[i],
-                        hostPort: this.hostPort[i]
+                        //hostPort: this.hostPort[i]
                     })
                 }
                 return res;
             }else{
                 auth.server = this.hosts;
                 auth.hostIp = this.hostIp[0];
-                auth.hostPort = this.hostPort[0];
+                //auth.hostPort = this.hostPort[0];
             }
         }else if (this.isDevice){
             auth.deviceUID = this.linkedDeviceUID;
@@ -147,18 +147,18 @@ export default class TabacAction {
                     for (const server of configuration.servers) {
                         if (server.name === host){
                             this.hostIp.push(server.host);
-                            this.hostPort.push(server.port);
+                            //this.hostPort.push(server.port);
                         }
                     }
                 }
-                if (this.hostIp.length !== this.hostPort.length || this.hostIp.length !== this.hosts.length){
+                if (this.hostIp.length !== this.hosts.length){
                     throw new TabacError(`Error while linking the server references (${this.hosts}) from a tabac rule [then section].`)
                 }
             }else{
                 for (const server of configuration.servers) {
                     if (server.name === this.hosts){
                         this.hostIp.push(server.host);
-                        this.hostPort.push(server.port);
+                        //this.hostPort.push(server.port);
                         found=true;
                     }
                 }

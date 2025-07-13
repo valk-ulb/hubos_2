@@ -4,7 +4,7 @@ import MqttError from '../error/MqttError.js'
 import MqttAlreadyExistError from '../error/MqttAlreadyExistError.js'
 import MqttNotFoundError from '../error/MqttError.js';
 import { replaceUnderscoresWithDashes } from '../utils/NameUtil.js';
-import permissionManager from '../permissionManager/PermissionManager.js';
+import permissionManager from '../Controller/PermissionManager.js';
 
 export default class MqttClient{
     

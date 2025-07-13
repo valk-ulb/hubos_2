@@ -45,6 +45,17 @@ program
         await hcore.run(__databaseDir);
     });
 
+program
+    .description('hubos api server')
+    .command('api')
+    .option('-d, --debug', 'Debug mode')
+    .action(async (options) => {
+        process.env.NODE_ENV = options.debug ? 'dev' : 'production';
+        //logger.info('running api server')
+        //hcore.configureRestApi();
+        hcore.configureProxy();
+    })
+
 program.parse();
 
 /*

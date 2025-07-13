@@ -4,7 +4,7 @@ import IncorrectJsonStructureError from '../error/IncorrectJsonStructureError.js
 import AppConfiguration from './Configuration.js';
 import Module from './Module.js';
 import {join} from 'path'
-import { isSafeName, isSafeText, isSafeType, isNumber, isSafeValue, isSafeContext, isSafeUIDWithEmptyStringAcceptance, isHostWithEmptyStringAcceptance, isNumberWithEmptyStringAcceptance, isSafeEvent, isSafeActionType, isSafeContextHost, isSafePassToValue } from '../utils/SafetyChecker.js';
+import { isSafeName, isSafeText, isSafeType, isNumber, isSafeValue, isSafeContext, isSafeUIDWithEmptyStringAcceptance, isHostWithEmptyStringAcceptance, isNumberWithEmptyStringAcceptance, isSafeEvent, isSafeActionType, isSafeContextHost, isSafePassToValue, isPeriod } from '../utils/SafetyChecker.js';
 import logger from '../utils/logger.js';
 import fs from 'fs/promises';
 import { checkFormat } from '../utils/FormatChecker.js';
@@ -218,8 +218,8 @@ export default class App {
             checkFormat(condition.if.event, isSafeEvent, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath) &&
             checkFormat(condition.if.context, isSafeContext, IncorrectJsonStructureError, `The condition field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
         ){
-            if(condition.if.event.toLowerCase() === 'system.time' && (condition.if.context.toLowerCase() !== 'genericcrontrigger' && condition.if.context.toLowerCase() !== 'timeofdaytrigger' && condition.if.context.toLowerCase() !== 'datetimetriggertimeonly' && condition.if.context.toLowerCase() !== 'datetimetrigger')){
-                throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined -- see the system.time : ${this.appName}`)
+            if(condition.if.event.toLowerCase() === 'system.time' && !(condition.if.context.toLowerCase() === 'genericcrontrigger' || condition.if.context.toLowerCase() === 'timeofdaytrigger' || condition.if.context.toLowerCase() === 'datetimetriggertimeonly' || condition.if.context.toLowerCase() === 'datetimetrigger')){
+                throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined -- see the system.time : ${this.appName} ---- ${condition.if.event.toLowerCase() === 'system.time'} --- ${!(condition.if.context.toLowerCase() === 'genericcrontrigger' || condition.if.context.toLowerCase() === 'timeofdaytrigger' || condition.if.context.toLowerCase() === 'datetimetriggertimeonly' || condition.if.context.toLowerCase() === 'datetimetrigger')} ----- ${condition.if.context.toLowerCase()}`)
             }
             if(Array.isArray(condition.if.value)){
                 condition.if.value.forEach(value => {
@@ -239,20 +239,20 @@ export default class App {
             checkFormat(then.type, isSafeActionType, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath) &&
             then.context
         ){
-            if (then.type.toLowerCase() !== 'flow' &&(!then.context.period || !checkFormat(then.context.period, isNumber, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath))){
-                throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.period : ${this.appName}`);
+            if (then.type.toLowerCase() !== 'flow' &&(!then.context.period || !checkFormat(then.context.period, isPeriod, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath))){
+                throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.period - ${then.context.period} : ${this.appName}`);
             }
             // else if (then.type.toLowerCase() === 'flow' && (!then.context.pass_to || !checkFormat(then.context.pass_to, isSafeName,IncorrectJsonStructureError,`The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath))){
             //     console.log(then)
             //     throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.pass_to : ${this.appName}`);
             // }
-            if ((!then.context.concern || !checkFormat(then.context.concern, isSafeText,IncorrectJsonStructureError,`The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath))){
+            if ((!then.context.concern || !checkFormat(then.context.concern, isSafeName,IncorrectJsonStructureError,`The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath))){
                 throw new IncorrectJsonStructureError(`Error: the tabac-rules file is incorrectly defined - check then.context.concern : ${this.appName}`)
             }
             if (then.access.toLowerCase() === 'networkclient' && then.context.host){
                 if (Array.isArray(then.context.host)){
                     then.context.host.forEach(value => {
-                        checkFormat(value, isSafeContextHost, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
+                        checkFormat(value, isSafeContextHost, IncorrectJsonStructureError, `The then/host field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
                     });
                 }else if (then.context.host.toLowerCase() !== 'all'){
                     checkFormat(then.context.host, isSafeContextHost, IncorrectJsonStructureError, `The then field in the tabac-rules/${rulename} file is incorrectly defined`, this.appPath)
@@ -283,7 +283,7 @@ export default class App {
             for (const [serverName, server] of Object.entries(manifest.configuration.servers)) {
                 checkFormat(serverName, isSafeName, IncorrectJsonStructureError, `The server-name field in the config file is incorrectly defined`, this.appPath)
                 checkFormat(server.host, isHostWithEmptyStringAcceptance, IncorrectJsonStructureError, `The server-host field in the config file is incorrectly defined`, this.appPath)
-                checkFormat(server.port, isNumberWithEmptyStringAcceptance, IncorrectJsonStructureError, `The server-port field in the config file is incorrectly defined`, this.appPath)
+                //checkFormat(server.port, isNumberWithEmptyStringAcceptance, IncorrectJsonStructureError, `The server-port field in the config file is incorrectly defined`, this.appPath)
                 checkFormat(server.description, isSafeText, IncorrectJsonStructureError, `The server-description field in the config file is incorrectly defined`, this.appPath)
             }
         }else{

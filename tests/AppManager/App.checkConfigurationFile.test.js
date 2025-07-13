@@ -103,17 +103,6 @@ test('checkConfigurationFileStructure correct format - server/name', async () =>
     await expect(app.checkConfigurationFileStructure(confPath)).rejects.toThrowError();
 })
 
-test('checkConfigurationFileStructure correct format - server/port', async () => {
-    const confPath = join(testFilesDir, 'config/configCorrectServerPort.json');
-    const app = new App("");
-    await expect(app.checkConfigurationFileStructure(confPath)).rejects.toThrowError();
-})
-
-test('checkConfigurationFileStructure correct format value - server/port', async () => {
-    const confPath = join(testFilesDir, 'config/configCorrectServerPortValue.json');
-    const app = new App("");
-    await expect(app.checkConfigurationFileStructure(confPath)).rejects.toThrowError();
-})
 
 test('checkConfigurationFileStructure correct format - servers', async () => {
     const confPath = join(testFilesDir, 'config/configCorrectServers.json');

@@ -53,7 +53,7 @@ export default class Configuration{
             const serverIP = serverConfig['host'];
             const serverPort = serverConfig['port'];
             const serverDescription = serverConfig['description'];
-            const server = new Server(serverName, serverIP, serverPort, serverDescription)
+            const server = new Server(serverName, serverIP, serverDescription)
             this.servers.push(server);
         });
     }

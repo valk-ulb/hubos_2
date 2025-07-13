@@ -1,7 +1,6 @@
 import Device from "../model/Device.js";
 import Permission from "../model/Permission.js";
 import Server from "../model/Server.js";
-
 class PermissionManager{
 
 
@@ -23,13 +22,17 @@ class PermissionManager{
 
     verifyIfAlreadyPermitted(auth, moduleId){
         let i = 0;
+        let res = -1;
         for (let permission of this.permissions.get(moduleId)){
-                if (permission.compareAuth(auth)){
+            if (permission.compareAuth(auth)){
+                res = i;
+                if(permission.isServerAll){
                     return i;
                 }
+            }
             i = i+1;
         }
-        return -1;
+        return res;
     }
 
     addNewPermission(message, moduleId){
@@ -44,12 +47,27 @@ class PermissionManager{
                     const temp = new Device(auth.access,auth.deviceUID,'','deviceForPermission')
                     this.permissions.get(moduleId).push(new Permission(auth.period,null, temp))
                 }else if (auth.type === "service" && auth.access === "NetworkClient"){
-                    const temp = new Server(auth.server,auth.hostIp,auth.hostPort,'');
+                    const temp = new Server(auth.server,auth.hostIp,'');
                     this.permissions.get(moduleId).push(new Permission(auth.period, temp));
                 }
             }
         }
     }
+
+    isServerPermitted(url, moduleId){
+        // if(url.startsWith(hserver.hubosServer) || url.startsWith(hserver.hubosServerAlternative)){
+        //     return true;
+        // }
+        for (let p of this.permissions.get(moduleId)){
+            if (p.isServer){
+                if(p.isServerPermitted(url)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }
 
 const permissionManager = new PermissionManager();

@@ -30,7 +30,7 @@
             },
             {
                 "access":"camera_x",
-                "type": "thing",
+                "type": "device",
                 "context":{
                     "period":"5",
                     "concern":"test1"

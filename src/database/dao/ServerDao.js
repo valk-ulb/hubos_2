@@ -13,14 +13,14 @@ export default class ServerDao {
     async getServersFromApp(app){
         try {
             const queryText = `
-            SELECT id, app_id, name, host, port, description
+            SELECT id, app_id, name, host, description
             FROM appServer
             WHERE app_id = $1
             `;
             const { rows } = await db.pool.query(queryText, [app.appId]);
             let servers = [];
             rows.forEach(row => {
-                servers.push(new Server(row.name, row.host, row.port,row.description,row.id))
+                servers.push(new Server(row.name, row.host,row.description,row.id))
             })
             return servers;
         } catch (err) {

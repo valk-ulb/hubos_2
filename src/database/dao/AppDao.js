@@ -118,11 +118,11 @@ export default class AppDao {
      */
     async insertAppServer(server, app_id, appName, client){
         const queryInsertServer = `
-            INSERT INTO appServer (app_id, name, host, port, description)
+            INSERT INTO appServer (app_id, name, host, description)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id
         `
-        const res = await client.query(queryInsertServer, [app_id, server.name, server.host, server.port, server.description]);
+        const res = await client.query(queryInsertServer, [app_id, server.name, server.host, server.description]);
 
         if (res.rows.length > 0) {
             logger.info(`New server configuration added for app : ${appName}`,true)

@@ -10,8 +10,9 @@ import MqttAdmin from '../mqtt/MqttAdmin.js'
 import * as dotenv from "dotenv";
 import { createJWT } from '../utils/jwtUtil.js';
 import { getHubosTopicFromModule, getItemNameFromModule, getRoleFromModule, replaceDashesWithUnderscores, getRuleUID, getModuleAuthTopic } from '../utils/NameUtil.js';
-import permissionManager from '../permissionManager/PermissionManager.js';
+import permissionManager from '../Controller/PermissionManager.js';
 import hproxy from './HProxy.js';
+//import hserver from './Hserver.js';
 dotenv.config({});
 
 
@@ -32,6 +33,12 @@ export default class HCore{
         await hproxy.startProxy();
         hproxy.configureForwardProxy();
         logger.info('Proxy configured')
+    }
+
+    configureRestApi(){
+        logger.info('Configure Rest api');
+        hserver.setupRoutes();
+        hserver.start();
     }
 
     async initMqtt(){
@@ -60,7 +67,6 @@ export default class HCore{
         await this.appManager.getAllModulesUID().then(async (modulesUID) => {
             await this.resetContainers(modulesUID);
         })
-        .catch(()=>{});
 
         await this.extractAppsForDelete().catch(() => {return;});
         for (let app of this.getApps()){
@@ -92,6 +98,7 @@ export default class HCore{
         //await db.setupDatabase().catch(()=>{});
         //await db.setupExtension().catch(()=>{});
         //await db.initDB(databaseDir).catch(()=>{});
+        return;
     }
 
     async run(databaseDir){
@@ -102,6 +109,7 @@ export default class HCore{
         await db.setupExtension().catch(()=>{});
         await db.initDB(databaseDir).catch(()=>{});
         await this.configureProxy();
+        //this.configureRestApi();
 
         await this.mqttAdmin.createSupervisorRole('hubos').catch(()=>{});
         await this.mqttAdmin.createSupervisorRole('openHab').catch(()=>{});
@@ -149,12 +157,10 @@ export default class HCore{
 
     async resetContainers(modulesUID){
         await modulesUID.forEach(async (moduleUID) => {
-            logger.info(`removing module with uid : ${modulesUID} from system`,true)
+            logger.info(`removing module with uid : ${moduleUID} from system`,true)
             // stop + remove all container
-            await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}`).catch(() => {});
-            await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}`).catch(() => {});
-            await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
-            await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
+            await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch((err) => {logger.error(`error deleting container: `,true, err)});
+            //await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch((err) => {logger.error(`error deleting image: `,true, err)});
         })
     }
 

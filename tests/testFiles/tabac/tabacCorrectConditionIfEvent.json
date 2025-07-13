@@ -23,14 +23,17 @@
                 "access": "NetworkClient",
                 "type": "service",
                 "context": {
-                    "period": "5"
+                    "period": "5",
+                    "host":"all",
+                    "concern":"test1"
                 }
             },
             {
                 "access":"camera_x",
-                "type": "thing",
+                "type": "device",
                 "context":{
-                    "period":"5"
+                    "period":"5",
+                    "concern":"test1"
                 }
             }
         ]
