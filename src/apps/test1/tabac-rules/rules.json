@@ -18,6 +18,31 @@
                     "host":"all",
                     "concern":"test1_service"
                 }
+            },
+            {
+                "access": "NetworkClient",
+                "type": "service",
+                "context": {
+                    "period": "200",
+                    "host":["server1","server2"],
+                    "concern":"test1_service"
+                }
+            },
+            {
+                "access": "myDeviceName",
+                "type":"device",
+                "context":{
+                    "period": "300",
+                    "concern": "test1_service"
+                }
+            },
+            {
+                "access": "pass_through",
+                "type":"flow",
+                "context":{
+                    "concern": "test1_service",
+                    "value": "event1"
+                }
             }
         ]
     }

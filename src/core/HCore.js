@@ -10,6 +10,8 @@ import MqttAdmin from '../mqtt/MqttAdmin.js'
 import * as dotenv from "dotenv";
 import { createJWT } from '../utils/jwtUtil.js';
 import { getHubosTopicFromModule, getItemNameFromModule, getRoleFromModule, replaceDashesWithUnderscores, getRuleUID, getModuleAuthTopic } from '../utils/NameUtil.js';
+import permissionManager from '../permissionManager/PermissionManager.js';
+import hproxy from './HProxy.js';
 dotenv.config({});
 
 
@@ -23,6 +25,13 @@ export default class HCore{
         this.sandboxManager = new SandboxManager();
         this.openhabAPI = new OpenhabAPI();
         this.mqttAdmin = new MqttAdmin();
+    }
+
+    async configureProxy(){
+        logger.info('Configure proxy')
+        await hproxy.startProxy();
+        hproxy.configureForwardProxy();
+        logger.info('Proxy configured')
     }
 
     async initMqtt(){
@@ -49,22 +58,11 @@ export default class HCore{
     async resetAll(databaseDir){
         await db.setupDatabase().catch(()=>{})
         await this.appManager.getAllModulesUID().then(async (modulesUID) => {
-            await modulesUID.forEach(async (moduleUID) => {
-                logger.info(`removing module with uid : ${modulesUID} from system`,true)
-                // stop + remove all container
-                await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
-                await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
-                await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}`).catch(() => {});
-                await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}`).catch(() => {});
-                // remove client mqtt
-                await this.mqttAdmin.disableClient(moduleUID).catch(() => {});
-                await this.mqttAdmin.deleteClient(moduleUID).catch(() => {});
-                await this.mqttAdmin.deleteRole(`role-${moduleUID}`).catch(() => {});
-            })
+            await this.resetContainers(modulesUID);
         })
         .catch(()=>{});
 
-        await this.extractAppsForDelete();
+        await this.extractAppsForDelete().catch(() => {return;});
         for (let app of this.getApps()){
             /**@type {App} */
             let temp = app.app;
@@ -97,6 +95,9 @@ export default class HCore{
     }
 
     async run(databaseDir){
+        await this.appManager.getAllModulesUID().then(async (modulesUID) => {
+            await this.resetContainers(modulesUID);
+        }).catch(()=>{})
         await db.setupDatabase().catch(()=>{})
         await db.setupExtension().catch(()=>{});
         await db.initDB(databaseDir).catch(()=>{});
@@ -107,26 +108,30 @@ export default class HCore{
         await this.mqttAdmin.createClient('openhabClient','openhabClient','','openHab client',['openHab']).catch(()=>{})
         const brokerThing = await this.openhabAPI.getBrokerThing();
         await this.extractApps();
+        let modulesUID = [];
         for (let app of this.getApps()){
-            for (let module of app.app.getModules()){
-                logger.info(`mqtt configuration for module ${module.moduleId}`,true)
-                await this.mqttAdmin.createModuleRole(module.moduleId, getRoleFromModule(module.moduleId));
-                await this.mqttAdmin.createClient(module.moduleId, module.moduleId, module.moduleId, `client module: ${module.moduleId}`,[getRoleFromModule(module.moduleId)]);
-
-                logger.info(`openhab configuration for module ${module.moduleId}`,true)
-                const topicItem = await this.openhabAPI.createTopicItem(getItemNameFromModule(module.moduleId),getItemNameFromModule(module.moduleId));
-                const topicChannel = await this.openhabAPI.createTopicChannel(getHubosTopicFromModule(module.moduleId), getItemNameFromModule(module.moduleId));
-                const linkItem = await this.openhabAPI.linkItemToChannel(getItemNameFromModule(module.moduleId))
-                this.mqttAdmin.subscribeToAuthTopic(getModuleAuthTopic(module.moduleId))
-            }
             if (!app.app.appExist){
+                for (let module of app.app.getModules()){
+                    logger.info(`mqtt configuration for module ${module.moduleId}`,true)
+                    await this.mqttAdmin.createModuleRole(module.moduleId, getRoleFromModule(module.moduleId));
+                    await this.mqttAdmin.createClient(module.moduleId, module.moduleId, module.moduleId, `client module: ${module.moduleId}`,[getRoleFromModule(module.moduleId)]);
+
+                    logger.info(`openhab configuration for module ${module.moduleId}`,true)
+                    const topicItem = await this.openhabAPI.createTopicItem(getItemNameFromModule(module.moduleId),getItemNameFromModule(module.moduleId));
+                    const topicChannel = await this.openhabAPI.createTopicChannel(getHubosTopicFromModule(module.moduleId), getItemNameFromModule(module.moduleId));
+                    const linkItem = await this.openhabAPI.linkItemToChannel(getItemNameFromModule(module.moduleId))
+                }
+            
                 let openhabRules = app.app.openhabRules;
                 for (const openhabRule of openhabRules){
                     await this.openhabAPI.createRule(app.app.appName,app.app.appId,openhabRule.name,openhabRule.openhabRule.triggers,openhabRule.openhabRule.conditions,openhabRule.openhabRule.actions);
                 }
             }
-
             for (let module of app.app.getModules()){
+                await this.mqttAdmin.subscribeToAuthTopic(getModuleAuthTopic(module.moduleId)) 
+            }
+            for (let module of app.app.getModules()){
+                modulesUID.push(module.moduleId);
                 logger.info(`sanbox creation and run for module ${replaceDashesWithUnderscores(module.moduleId)}`,true);
                 const tokens = createJWT(module.moduleId);
                 const modulesPath = join(app.app.appPath, 'modules')
@@ -136,59 +141,24 @@ export default class HCore{
                 this.sandboxManager.startContainer(cont);
                 logger.info('sanbox creation and start is a success',true)
             }
-            
+            permissionManager.setModulesIds(modulesUID);
         }
         console.log('petit test')
     }
 
-    async resetContainers(){
-        /**@type{App[]} */
-        const apps = this.appManager.apps;
-        for (const a of apps){
-            /**@type{Module[]} */
-            const modules = a.getModules();
-            for (const module of modules){
-                const modulePath = path.join(a.appPath, module.moduleName);
-                const configPath = a.configPath;
-                const tokens = createJWT(module.moduleId);
-                const tarStream = this.sandboxManager.buildTarStream(modulePath,configPath)
-                
-                await this.sandboxManager.stopAndRemoveContainer(module.moduleId);
-                await this.sandboxManager.removeImage(module.moduleId);
-                
-
-                await this.sandboxManager.buildImageWithTar(tarStream, module.moduleId);
-                
-                let container = await sandboxManager.createContainer(module.moduleId);
-                sandboxManager.startContainer(container);
-            }
-        }
+    async resetContainers(modulesUID){
+        await modulesUID.forEach(async (moduleUID) => {
+            logger.info(`removing module with uid : ${modulesUID} from system`,true)
+            // stop + remove all container
+            await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}`).catch(() => {});
+            await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}`).catch(() => {});
+            await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
+            await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
+            // remove client mqtt
+            await this.mqttAdmin.disableClient(moduleUID).catch(() => {});
+            await this.mqttAdmin.deleteClient(moduleUID).catch(() => {});
+            await this.mqttAdmin.deleteRole(`role-${moduleUID}`).catch(() => {});
+        })
     }
-
-    async stopAllContainers(){
-        /**@type{App[]} */
-        const apps = this.appManager.apps;
-        for (const a of apps){
-            /**@type{Module[]} */
-            const modules = a.getModules();
-            for (const module of modules){                
-                await this.sandboxManager.stopContainer(module.moduleId);
-            }
-        }
-    }
-
-    async startAllContainers(){
-        /**@type{App[]} */
-        const apps = this.appManager.apps;
-        for (const a of apps){
-            /**@type{Module[]} */
-            const modules = a.getModules();
-            for (const module of modules){                
-                let container = this.sandboxManager.getContainer(module.moduleId)
-                sandboxManager.startContainer(container);
-            }
-        }
-    }
-
 
 }

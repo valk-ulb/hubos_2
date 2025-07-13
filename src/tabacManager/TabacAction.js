@@ -50,18 +50,24 @@ export default class TabacAction {
         if (this.isService && this.isNetworkClient){
             if (this.isMultipleHosts){
                 let res = [];
-                for (const h of this.hosts){
+                for (let i=0; i<this.hosts.length; i++){
                     res.push({
                         period : this.context.period,
                         type: this.type,
                         access: this.access,
-                        host: h
+                        server: this.hosts[i],
+                        hostIp: this.hostIp[i],
+                        hostPort: this.hostPort[i]
                     })
                 }
                 return res;
             }else{
-                auth.host = this.hosts;
+                auth.server = this.hosts;
+                auth.hostIp = this.hostIp[0];
+                auth.hostPort = this.hostPort[0];
             }
+        }else if (this.isDevice){
+            auth.deviceUID = this.linkedDeviceUID;
         }
         return auth;
 

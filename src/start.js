@@ -1,22 +1,7 @@
 import HCore from './core/HCore.js';
-import db from './database/Database.js'
 import { fileURLToPath } from 'url';
 import { dirname,join,resolve } from 'path';
 import logger from "./utils/logger.js";
-import SandboxManager from './Controller/SandboxManager.js';
-import tar from 'tar-fs'
-import fs from 'fs'
-import MqttAdmin from './mqtt/MqttAdmin.js'
-import MqttError from './error/MqttError.js';
-import MqttAlreadyExistError from './error/MqttAlreadyExistError.js'
-import MqttNotFoundError from './error/MqttError.js';
-import RestApiServer from './hubosAPI/RestApiServer.js'
-import path from 'path';
-import Hserver from './core/Hserver.js';
-import {createJWT} from './utils/jwtUtil.js'
-import OpenhabAPI from './openhabAPI/OpenhabAPI.js';
-import Hproxy from './core/HProxy.js';
-import Hproxy2 from './core/HProxy2.js';
 
 import { program } from 'commander';
 import * as dotenv from "dotenv";
@@ -37,7 +22,7 @@ logger.info(`root directory = ${__rootDirname}`)
 // App manager
 const hcore = new HCore(__rootDirname);
 await hcore.initMqtt();
-
+await hcore.configureProxy();
 program
     .description('reset all')
     .command('reset')

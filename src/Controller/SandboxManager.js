@@ -5,6 +5,7 @@ import SandboxError from "../error/SandboxError.js";
 import path from 'path';
 import fs from 'fs';
 import tarStream from 'tar-stream'
+import hproxy from "../core/HProxy.js";
 export default class SandboxManager {
 
     /**
@@ -16,26 +17,38 @@ export default class SandboxManager {
         if(socketPath){
             this.docker = new Docker({ socketPath: socketPath});
         }
-        this.SUBNET = '172.25.0.0/16';
-        this.GATEWAY = '172.25.0.1';
-        this.PROXY_PORT = 9090;
-        this.dockerHost = `http://${this.GATEWAY}:${this.PROXY_PORT}`
+        this.proxy = hproxy.proxy;
+        this.SUBNET = process.env.HOST_DOCKER_SUBNET;
+        this.GATEWAY = process.env.HOST_DOCKER_GATEWAY;
     }
 
     async createIsolatedNetwork() {
-        console.log('🌐 Création du réseau isolé...');
-
+        logger.info('Creation of a docker isolated network');
+        const networks = await this.docker.listNetworks({filters:{name:['hubos_net']}});
+        if (networks.length > 0){
+            logger.info(`Network hubos_net already. Skipping this part.`);
+            return;
+        }
         try {
-          await docker.createNetwork({
-            Name: 'isolated_net',
-            Driver: 'bridge',
-            IPAM: {
-              Config: [{ Subnet: SUBNET, Gateway: GATEWAY }]
-            }
-          });
+            await this.docker.createNetwork({
+                Name: 'hubos_net',
+                Driver: 'bridge',
+                Internal: true,
+                IPAM: {
+                    Config: [
+                        { 
+                            Subnet: "172.20.0.0/16"
+                        }
+                    ]
+                },
+                Options: {
+                    'com.docker.network.bridge.enable_ip_masquerade': 'false'
+                }
+            });
+            logger.info('Network hubos_net created')
         } catch (err) {
           if (err.statusCode === 409) {
-            logger.info('ℹ️ Le réseau existe déjà, on continue...');
+            throw new Error('Error whille trying creating the network hubos_net');
           } else {
             throw err;
           }
@@ -94,16 +107,23 @@ export default class SandboxManager {
             name: imageName,
             HostConfig: {
                 Runtime: 'runsc',
-                NetworkMode: 'host'
+                ExtraHosts:['host.docker.internal:host-gateway'],
+                NetworkMode: 'my-secure-network'
             },
             ExposedPorts: {
                 '9090/tcp': {}
             },
             Env: [
+                `HTTP_PROXY=${this.proxy}`,
+                `HTTPS_PROXY=${this.proxy}`,
                 `MODULE_UID=${imageName}`
             ]
         });
         return container;
+    }
+
+    async runContainer(imageName){
+        await this.docker.run(`${imageName}:latest`)
     }
 
     async startContainer(container){

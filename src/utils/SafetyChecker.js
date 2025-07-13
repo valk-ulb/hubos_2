@@ -58,7 +58,7 @@ export function isSafeCron(cron){
 }
 
 export function isSafeContextHost(host){
-    const safeRegex = /^(@[a-zA-Z0-9._\-]+)$/;
+    const safeRegex = /^[a-zA-Z0-9./_\-]+$/;
     return safeRegex.test(host)
 }
 

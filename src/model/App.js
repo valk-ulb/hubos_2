@@ -200,7 +200,6 @@ export default class App {
                 }
 
                 rule.then.forEach(then => {
-                    console.log(then)
                     this.checkThen(then, rule.name);
                 })
             }else{

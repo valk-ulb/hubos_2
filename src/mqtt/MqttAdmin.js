@@ -3,6 +3,8 @@ import logger from '../utils/logger.js'
 import MqttError from '../error/MqttError.js'
 import MqttAlreadyExistError from '../error/MqttAlreadyExistError.js'
 import MqttNotFoundError from '../error/MqttError.js';
+import { replaceUnderscoresWithDashes } from '../utils/NameUtil.js';
+import permissionManager from '../permissionManager/PermissionManager.js';
 
 export default class MqttClient{
     
@@ -33,6 +35,15 @@ export default class MqttClient{
                 reject(err);
             });
 
+            this.admin.on('message', (topic, message) => {
+                if (topic.startsWith('admin/auth-')){
+                    this.manageAuthMessage(topic, message);
+                }else{
+                    this.manageReceivedMessage(topic, message);
+                }
+    
+            });
+
 
         })
     }
@@ -45,8 +56,13 @@ export default class MqttClient{
     }
 
     manageAuthMessage(topic, message){
-        const response = JSON.parse(message);
         logger.info(`auth message received on ${topic} : ${message}`);
+        const concernedModuleId = replaceUnderscoresWithDashes(topic.slice(11));
+        try{
+            permissionManager.addNewPermission(message, concernedModuleId);
+        }catch(error){
+            logger.error(`Manage Auth message error: `, true, error);
+        }
     }
 
     disconnect() {
@@ -63,20 +79,16 @@ export default class MqttClient{
             throw new MqttError('Client MQTT not connected');
         }
         await this.admin.subscribe(`${this.adminTopic}/#`);
-        this.admin.on('message', (topic, message) => {
-            this.manageReceivedMessage(topic, message);
-        });
+
     }
 
     async subscribeToAuthTopic(topic){
+        logger.info("subscribe to "+ topic,true)
         if (!this.admin || !this.admin.connected) {
             logger.error('Client MQTT not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
         await this.admin.subscribe(`${topic}/#`);
-        this.admin.on('message', (topic, message) => {
-            this.manageAuthMessage(topic, message);
-        });
     }
 
     /**

@@ -1,4 +1,5 @@
 import net from 'net'
+
 export default class Hproxy2{
     constructor(){
         this.app = net.createServer();
@@ -59,8 +60,7 @@ export default class Hproxy2{
 
     async startProxy(){
         this.app.listen({host: this.host, port:this.port},  () => {
-            console.log(`Proxy server 2running on http://localhost:${this.port}`);
+            console.log(`Proxy server running on http://localhost:${this.port}`);
         });
     }
-
 }

@@ -273,7 +273,6 @@ export default class OpenhabAPI {
                   visibility: "VISIBLE"
                 }
 
-            console.log(util.inspect(tarRule,{ showHidden: true, depth: null, colors: true }))
             const response = await axios.post(`${this.baseUrl}/rules`, JSON.stringify(tarRule), {
                 headers: {
                     'Content-Type': 'application/json',

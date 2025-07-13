@@ -7,7 +7,18 @@
                 "description" : "Little description of the device for the user"
             }
         },
-        "servers":{}
+        "servers":{
+            "server1":{
+                "host": "www.exammple.com",
+                "port": "443",
+                "description": "Little description of the server for the user"
+            },
+            "server2":{
+                "host": "www.exammple2.com",
+                "port": "443",
+                "description": "Little description of the server 2 for the user"
+            }
+        }
         
     }
 }
