@@ -22,7 +22,6 @@ logger.info(`root directory = ${__rootDirname}`)
 // App manager
 const hcore = new HCore(__rootDirname);
 await hcore.initMqtt();
-await hcore.configureProxy();
 program
     .description('reset all')
     .command('reset')

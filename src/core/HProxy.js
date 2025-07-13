@@ -1,6 +1,7 @@
 
 import { abort } from 'process';
 import {Straightforward, middleware} from 'straightforward'
+import { replaceUnderscoresWithDashes } from '../utils/NameUtil';
 class Hproxy{
     constructor(){
         //this.target = `http://${process.env.HUBOS_URL}`
@@ -12,6 +13,18 @@ class Hproxy{
     configureForwardProxy(){
         this.sf.onRequest.use(async ({req, res}, next) => {
             console.log(`http request: ${req.url}`);
+            console.log(`http module`)
+            console.log();
+            let hubos_container_id = req.headers['hubos-container-id'];
+            if (!hubos_container_id){
+                return abort();
+            }
+
+            hubos_container_id = replaceUnderscoresWithDashes(hubos_container_id);
+
+            //if request to api allow 
+
+            //if request to external ask permission manager
             return next();
         })
 

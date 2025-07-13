@@ -95,12 +95,13 @@ export default class HCore{
     }
 
     async run(databaseDir){
-        await this.appManager.getAllModulesUID().then(async (modulesUID) => {
-            await this.resetContainers(modulesUID);
-        }).catch(()=>{})
+        // await this.appManager.getAllModulesUID().then(async (modulesUID) => {
+        //     await this.resetContainers(modulesUID);
+        // }).catch(()=>{})
         await db.setupDatabase().catch(()=>{})
         await db.setupExtension().catch(()=>{});
         await db.initDB(databaseDir).catch(()=>{});
+        await this.configureProxy();
 
         await this.mqttAdmin.createSupervisorRole('hubos').catch(()=>{});
         await this.mqttAdmin.createSupervisorRole('openHab').catch(()=>{});
@@ -154,10 +155,6 @@ export default class HCore{
             await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}`).catch(() => {});
             await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
             await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch(() => {});
-            // remove client mqtt
-            await this.mqttAdmin.disableClient(moduleUID).catch(() => {});
-            await this.mqttAdmin.deleteClient(moduleUID).catch(() => {});
-            await this.mqttAdmin.deleteRole(`role-${moduleUID}`).catch(() => {});
         })
     }
 
