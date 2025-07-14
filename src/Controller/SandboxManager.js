@@ -6,8 +6,9 @@ import path from 'path';
 import fs, { link } from 'fs';
 import tarStream from 'tar-stream'
 import hproxy from "../core/HProxy.js";
-//import hserver from "../core/Hserver.js";
+import hserver from "../core/Hserver.js";
 import util from 'util'
+import { replaceUnderscoresWithDashes, getHubosTopicFromModule, getModuleSupervTopic } from "../utils/NameUtil.js";
 export default class SandboxManager {
 
     /**
@@ -22,6 +23,8 @@ export default class SandboxManager {
         this.proxy = hproxy.proxy;
         this.SUBNET = process.env.HOST_DOCKER_SUBNET;
         this.GATEWAY = process.env.HOST_DOCKER_GATEWAY;
+        this.MQTT_HOST = process.env.MQTT_HOST;
+        this.MQTT_PORT = process.env.MQTT_PORT;
     }
 
     async createIsolatedNetwork() {
@@ -64,13 +67,14 @@ export default class SandboxManager {
             if (stat.isDirectory()) return this.addDirOnDiskToTar(pack, p, path.join(prefix, f));
             pack.entry({ name: path.join(prefix, f) }, fs.readFileSync(p));
         });
+        return pack
     }
     
 
     async buildTarStream(modulePath, configPath, tokens){
-        const pack = tarStream.pack()
+        let pack = tarStream.pack()
         
-        this.addDirOnDiskToTar(pack, modulePath)
+        pack = this.addDirOnDiskToTar(pack, modulePath)
         
 
         const extra = path.resolve(configPath);
@@ -86,12 +90,14 @@ export default class SandboxManager {
      * @param {String} moduleUID - uid of the module the image is build for .
      */
     async buildImageWithTar(tarStream, moduleUID){
+        logger.info(`Building the image : ${moduleUID}:latest`);
         let stream = await this.docker.buildImage(tarStream, {
             t: `${moduleUID}:latest`,
             dockerfile:'Dockerfile',
             buildargs:{
             }
-        });
+        })
+        logger.info(`image : ${moduleUID}:latest builded`);
         await new Promise((resolve, reject) => {
             this.docker.modem.followProgress(
                 stream,
@@ -100,7 +106,7 @@ export default class SandboxManager {
                     if (event.stream) process.stdout.write(event.stream);
                 }
             );
-        });          
+        });    
     }
 
     async createContainer(imageName){
@@ -118,9 +124,18 @@ export default class SandboxManager {
             Env: [
                 `HTTP_PROXY=${this.proxy}`,
                 `HTTPS_PROXY=${this.proxy}`,
+                `NO_PROXY=localhost,host.docker.internal,mqtt://localhost:${this.MQTT_PORT},mqtt://host.docker.internal:${this.MQTT_PORT}`,
                 `MODULE_UID=${imageName}`,
-                //`HUBOS_API=${hserver.hubosServer}`
+                `MQTT_PORT= ${this.MQTT_PORT}`,
+                `MQTT_HOST=${this.MQTT_HOST}`,
+                `MODULE_TOPIC=${getHubosTopicFromModule(imageName)}`,
+                `MODULE_SUPERV_TOPIC=${getModuleSupervTopic(imageName)}`,
+                `HUBOS_API=${hserver.hubosServer}`,
+                `MQTT_USERNAME=${replaceUnderscoresWithDashes(imageName)}`,
+                `MQTT_PASSWORD=${replaceUnderscoresWithDashes(imageName)}`
             ]
+        }).catch((err) => {
+            throw new SandboxError('Error while creating the container',err);
         });
         return container;
     }
@@ -198,7 +213,7 @@ export default class SandboxManager {
         })
         this.docker.listContainers( (err,containers) => {
             console.log(containers.length)
-            containers.forEach( (containerInfo) => {
+            for (let containerInfo of containers){
                 this.docker.getContainer(containerInfo.Id).remove((err, data) => {
                     if (err) {
                         logger.error('Error trying removing a container :',true, err);
@@ -206,7 +221,7 @@ export default class SandboxManager {
                         logger.info('Container removed with success',true, data);
                       }
                 });
-            })
+            }
         })
     }
 

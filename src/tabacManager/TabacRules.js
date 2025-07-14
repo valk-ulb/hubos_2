@@ -16,9 +16,9 @@ export default class TabacRules {
     }
 
     extractTabacRules(){
-        this.appTabacRules.forEach(rule => {
+        for (const rule of this.appTabacRules){
             this.tabacRules.push(new TabacRule(rule['name'], rule['when'],rule['condition'], rule['then']));
-        });
+        };
     }
 
     /**
@@ -27,10 +27,10 @@ export default class TabacRules {
      * @param {Array<Module>} modules
      */
     linkEntityReferences(configuration, modules){
-        this.tabacRules.forEach(tabacRule => {
+        for (let tabacRule of this.tabacRules){
             console.log(`linking : ${tabacRule.name}`)
             tabacRule.linkEntityReferences(configuration, modules);
-        })
+        }
     }
 
     /**

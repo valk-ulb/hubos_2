@@ -19,9 +19,9 @@ export default class ServerDao {
             `;
             const { rows } = await db.pool.query(queryText, [app.appId]);
             let servers = [];
-            rows.forEach(row => {
-                servers.push(new Server(row.name, row.host,row.description,row.id))
-            })
+            for (const row of rows){
+                servers.push(new Server(row.name, row.host,row.description,row.id));
+            }
             return servers;
         } catch (err) {
             throw new DatabaseError(`Error : while trying to retrieve servers with following appname : ${app.appName}`, err);

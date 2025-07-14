@@ -1,0 +1,12 @@
+{
+    "name": "RingCamera",
+    "description": "When someone press the connected ring button, a camera take pictures and send them to a telegram chat",
+    "type": "ringCamera",
+    "modules":[
+        {
+            "name": "ring_handler",
+            "type": "handler",
+            "description": "handler module triggered when pressing the connected ring button"
+        }
+    ]
+}

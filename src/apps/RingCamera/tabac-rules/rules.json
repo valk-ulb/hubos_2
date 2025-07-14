@@ -1,0 +1,33 @@
+[
+    {
+        "name":"ring_button_call_ring_handler_module",
+        "description":"when ring button triggered call ring handler with auths",
+        "when":{
+            "event": "device.ringButtonItem",
+            "context": "updated",
+            "value": "ON"
+        },
+        "condition":[
+
+        ],
+        "then":[
+            {
+                "access": "NetworkClient",
+                "type": "service",
+                "context":{
+                    "period" : "1800",
+                    "host" : ["telegramServer","CameraUrl"],
+                    "concern": "ring_handler"
+                }
+            },
+            {
+                "access": "pass_through",
+                "type": "flow",
+                "context": {
+                    "concern": "ring_handler",
+                    "value": "ON"
+                }
+            }
+        ]
+    }
+]

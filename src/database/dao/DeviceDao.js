@@ -19,9 +19,9 @@ export default class DeviceDao {
             `;
             const { rows } = await db.pool.query(queryText, [app.appId]);
             let devices = [];
-            rows.forEach(row => {
+            for (let row of rows){
                 devices.push(new Device(row.name,row.deviceUID,row.description,row.type,row.id))
-            })
+            }
             return devices;
         } catch (err) {
             throw new DatabaseError(`Error : while trying to retrieve devices with following appname : ${app.appName}`, err);

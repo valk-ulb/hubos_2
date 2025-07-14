@@ -48,11 +48,11 @@ export async function checkAppTabacDirStructure(tabacPath){
 export async function checkAppModulesDirStructure(modulesPath, manifestModulesName){
     try{
         const entries = await fs.readdir(modulesPath, {withFileTypes: true});
-        manifestModulesName.forEach( moduleName => {
+        for (let moduleName of manifestModulesName){
             if (!isNameInEntries(entries, moduleName,true)){
                 throw new IncorrectStructureError(`Error: the module directory is incorrect : ${modulesPath} - look ${moduleName}`)
             }
-        })
+        }
         if (manifestModulesName.length===0){
             throw new IncorrectStructureError(`Error: the module directory do not contain any module : ${modulesPath}`)
         }

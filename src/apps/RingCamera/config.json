@@ -1,0 +1,24 @@
+{
+    "configuration":{
+        "devices":{
+            "ringButtonItem":{
+                "UID": "ddd",
+                "type" : "ring_button_itemName",
+                "description": "itemName of the ring button item on openhab."
+            }
+        },
+        "servers":{
+            "telegramServer":{
+                "host": "www.google.com",
+                "description": "telegram server to send messages"
+            },
+            "CameraUrl":{
+                "host": "www.example.com",
+                "description": "IPCamera (openhab thing) url to mjpeg"
+            }
+        },
+        "others":{
+
+        }
+    }
+}

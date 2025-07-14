@@ -3,9 +3,9 @@ import logger from '../utils/logger.js'
 import MqttError from '../error/MqttError.js'
 import MqttAlreadyExistError from '../error/MqttAlreadyExistError.js'
 import MqttNotFoundError from '../error/MqttError.js';
-import { replaceUnderscoresWithDashes } from '../utils/NameUtil.js';
+import { replaceDashesWithUnderscores, replaceUnderscoresWithDashes } from '../utils/NameUtil.js';
 import permissionManager from '../Controller/PermissionManager.js';
-
+import util from 'util'
 export default class MqttClient{
     
     constructor(){
@@ -51,7 +51,7 @@ export default class MqttClient{
     manageReceivedMessage(topic, message){
         if (topic === `${this.adminTopic}/response`){
             const response = JSON.parse(message);
-            logger.info(`message received on ${topic} : ${response}`);
+            logger.info(`message received on ${topic} : ${util.inspect(response, {colors: true, showHidden: true, depth:null})}`);
         }
     }
 
@@ -267,7 +267,7 @@ export default class MqttClient{
             logger.error('MQTT client is not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
-        const topic = moduleId;
+        const topic = replaceDashesWithUnderscores(moduleId);
 
         const command = {
             command: 'createRole',

@@ -32,14 +32,14 @@ export default class Configuration{
      */
     extractDevices(configurationData){
         const devices = configurationData.configuration.devices;
-        Object.keys(devices).forEach((deviceName) => {
+        for (let deviceName of Object.keys(devices)){
             const deviceConfig = devices[deviceName];
             const deviceUID = deviceConfig['UID'];
             const deviceDescription = deviceConfig['description']
             const deviceType = deviceConfig['type'];
             const device = new Device(deviceName, deviceUID, deviceDescription, deviceType);
             this.devices.push(device);
-        });
+        };
     }
 
     /**
@@ -48,14 +48,14 @@ export default class Configuration{
      */
     extractServers(configurationData){
         const servers = configurationData.configuration.servers;
-        Object.keys(servers).forEach((serverName) => {
+        for (let serverName of Object.keys(servers)){
             const serverConfig = servers[serverName];
             const serverIP = serverConfig['host'];
             const serverPort = serverConfig['port'];
             const serverDescription = serverConfig['description'];
             const server = new Server(serverName, serverIP, serverDescription)
             this.servers.push(server);
-        });
+        };
     }
 
 }

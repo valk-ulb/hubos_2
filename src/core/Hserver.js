@@ -34,5 +34,5 @@ class Hserver{
     }
 }
 
-//const hserver = new Hserver();
-//export default hserver;
+const hserver = new Hserver();
+export default hserver;

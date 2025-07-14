@@ -46,6 +46,7 @@ export default class AppManager {
         logger.info('Extracting all apps from db')
         const appsPath = await this.listAppDirectories(this.appsDirPath) 
         logger.info(`Founded apps path : ${JSON.stringify(appsPath)}`,true);
+        let appsTemp = [];
         for (let pair of appsPath){
             try{
                 if (await this.doesAppExist(pair.name, pair.path)){
@@ -54,13 +55,14 @@ export default class AppManager {
 
                     newApp = await this.extractAppFromDB(pair.name, newApp);
                     logger.info(`App ${pair.path} extracted from db`,true);
-                    this.apps.push({'name':pair.name,'app': newApp, 'appExist':true});
+                    appsTemp.push({'name':pair.name,'app': newApp, 'appExist':true});
                 }
             }catch(err){
                 logger.error(`Error while extracting the app : `,true, err)
             }
         }
         logger.info('All apps extracted')
+        return appsTemp
     }
 
     /**

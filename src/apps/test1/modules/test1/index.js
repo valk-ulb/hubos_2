@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 dotenv.config({});
 
 async function processTriggerEvent() {
-    const host = 'google.com'
+    const host = 'http://host.docker.internal:9090/api/v1'
     setInterval(async () => {
         
         try{

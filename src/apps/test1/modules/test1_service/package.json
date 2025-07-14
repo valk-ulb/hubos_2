@@ -4,7 +4,7 @@
   "description": "",
   "main": "test1_handler",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node test1_handler.js"
   },
   "author": "",
   "license": "ISC"

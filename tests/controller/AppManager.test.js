@@ -272,9 +272,9 @@ test('listAppDirectories return list of app directories', async () => {
     const result = await appManager.listAppDirectories(appsDir);
     const dirNames = ['appMissingModule','appNoConfig','appNoManifest','appNoModulesDir','appNoResourcesDir','appNoTabac','appNoTabacDir','appOK'];
     let expected = []
-    dirNames.forEach(dirName => {
+    for (const dirName of dirNames){
         expected.push({'name':dirName,'path':join(appsDir,dirName)})
-    })
+    }
     expect(result).toEqual(expected);
 })
 

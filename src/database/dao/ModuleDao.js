@@ -19,9 +19,9 @@ export default class ModuleDao {
             const { rows } = await db.pool.query(queryText, [app.appId]);
             if (rows.length > 0) {
                 let modules = [];
-                rows.forEach(row => {
+                for(const row of rows){
                     modules.push(new Module(row.name, row.type, row.description, row.id))
-                })
+                }
                 return modules;
             } else {
                 throw new DatabaseError(`No Module found with following appname : ${app.appName}`);
@@ -40,7 +40,9 @@ export default class ModuleDao {
             const {rows} = await db.pool.query(queryText);
             if (rows.length > 0){
                 var res = []
-                rows.forEach((r) => res.push(r.id));
+                for (const r of rows){
+                    res.push(r.id);
+                }
                 return res;
             }
             return [];

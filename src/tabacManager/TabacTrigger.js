@@ -12,7 +12,7 @@ export default class TabacTrigger {
         this.isEventMqtt = this.event.toLowerCase().startsWith('mqtt.');
         this.isSystem = this.event.toLowerCase().startsWith('system.');
         this.isEventDevice = this.event.toLowerCase().startsWith('device.')
-        this.eventWithoutPrefix =  getEventWithoutPrefix(event, this.isEventMqtt).toLowerCase();
+        this.eventWithoutPrefix =  getEventWithoutPrefix(event, this.isEventMqtt);
         this.values = values;
         
         this.isTime = this.event.toLowerCase() === 'system.time';

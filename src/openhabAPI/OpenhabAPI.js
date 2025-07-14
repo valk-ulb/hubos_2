@@ -29,6 +29,24 @@ export default class OpenhabAPI {
         }
     }
 
+    async setItemState(itemName, newState){
+        try {
+            const url = `${this.baseUrl}/items/${itemName}/state`
+
+            const response = await axios.put(url, newState, {
+                headers: {
+                    'Authorization': this.basicAuth,
+                    'Accept': '*/*',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return response.data
+        } catch (error) {
+            console.error('Erreur OpenHAB:', error.response?.data || error.message);
+        }
+    }
+
     async getBrokerThing(){
         try {
             const url = `${this.baseUrl}/things/${this.brokerThingUID}`

@@ -22,7 +22,7 @@ export function isSafeUIDWithEmptyStringAcceptance(uid){
 }
 
 export function isSafeType(type){
-    const safeRegex = /^[a-zA-Z]+$/;
+    const safeRegex = /^[a-zA-Z_-]+$/;
     return safeRegex.test(type);
 }
 
@@ -59,7 +59,7 @@ export function isSafeContextHost(host){
 }
 
 export function isSafeText(text){
-    const safeRegex = /^[a-zA-Z0-9 .\-_,]+$/;
+    const safeRegex = /^[a-zA-Z0-9 .\-_,()]+$/;
     return safeRegex.test(text) && !text.includes('..');
 }
 

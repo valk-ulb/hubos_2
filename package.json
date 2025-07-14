@@ -9,7 +9,7 @@
     "reset":"node src/start.js reset --debug",
     "prod": "NODE_ENV=production node src/start.js",
     "dev": "NODE_ENV=dev node src/start.js",
-    "debug": "node src/start.js start --debug",
+    "debug": "node src/start.js start --debug --reset",
     "debug_api": "node src/start.js api --debug"
   },
   "repository": {

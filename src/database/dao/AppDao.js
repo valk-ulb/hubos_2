@@ -16,18 +16,18 @@ export default class AppDao {
             await client.query('BEGIN');
             const app_id = await this.insertApp(app, client);
             app.setID(app_id);
-            await app.manifestModules.forEach(async module => {
+            for (let module of app.manifestModules){
                 const moduleId = await this.insertModule(module, app_id, app.appName ,client);
                 module.setID(moduleId);
-            });
-            await app.configuration.devices.forEach(async (device) => {
+            };
+            for (let device of app.configuration.devices){
                 const appDevicesId = await this.insertAppDevice(device, app_id, app.appName, client);
                 device.setID(appDevicesId);
-            });
-            await app.configuration.servers.forEach(async server => {
+            };
+            for (let server of app.configuration.servers){
                 const appServersId = await this.insertAppServer(server, app_id, app.appName, client);
                 server.setID(appServersId);
-            });
+            };
             await client.query('COMMIT');
             return app;
         } catch (err) {
@@ -119,7 +119,7 @@ export default class AppDao {
     async insertAppServer(server, app_id, appName, client){
         const queryInsertServer = `
             INSERT INTO appServer (app_id, name, host, description)
-            VALUES ($1, $2, $3, $4, $5)
+            VALUES ($1, $2, $3, $4)
             RETURNING id
         `
         const res = await client.query(queryInsertServer, [app_id, server.name, server.host, server.description]);
@@ -253,10 +253,12 @@ export default class AppDao {
             const {rows} = await db.pool.query(queryText);
             if (rows.length > 0){
                 var res = []
-                rows.forEach((r) => res.push({
-                    name: r.name,
-                    id: r.id
-                }));
+                for (let r of rows){
+                    res.push({
+                        name: r.name,
+                        id: r.id
+                    });
+                }
                 return res;
             }
             return [];

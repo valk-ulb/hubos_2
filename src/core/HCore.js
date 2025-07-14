@@ -12,7 +12,7 @@ import { createJWT } from '../utils/jwtUtil.js';
 import { getHubosTopicFromModule, getItemNameFromModule, getRoleFromModule, replaceDashesWithUnderscores, getRuleUID, getModuleAuthTopic } from '../utils/NameUtil.js';
 import permissionManager from '../Controller/PermissionManager.js';
 import hproxy from './HProxy.js';
-//import hserver from './Hserver.js';
+import hserver from './Hserver.js';
 dotenv.config({});
 
 
@@ -30,7 +30,7 @@ export default class HCore{
 
     async configureProxy(){
         logger.info('Configure proxy')
-        await hproxy.startProxy();
+        hproxy.startProxy();
         hproxy.configureForwardProxy();
         logger.info('Proxy configured')
     }
@@ -51,7 +51,7 @@ export default class HCore{
     }
 
     async extractAppsForDelete(){
-        await this.appManager.extractAppsForDelete();
+        return await this.appManager.extractAppsForDelete();
     }
 
     /**
@@ -66,10 +66,10 @@ export default class HCore{
         await db.setupDatabase().catch(()=>{})
         await this.appManager.getAllModulesUID().then(async (modulesUID) => {
             await this.resetContainers(modulesUID);
-        })
+        }).catch(()=>{})
 
-        await this.extractAppsForDelete().catch(() => {return;});
-        for (let app of this.getApps()){
+        let appsTemp = await this.extractAppsForDelete().catch(() => {return;});
+        for (let app of appsTemp){
             /**@type {App} */
             let temp = app.app;
             let appId = temp.appId;
@@ -94,36 +94,41 @@ export default class HCore{
         await this.mqttAdmin.deleteRole(`openHab`).catch(() => {});
 
         // erase db tables
-        await db.dropTables().catch(()=>{});
+        await db.dropTables();
         //await db.setupDatabase().catch(()=>{});
         //await db.setupExtension().catch(()=>{});
         //await db.initDB(databaseDir).catch(()=>{});
-        return;
     }
 
     async run(databaseDir){
-        // await this.appManager.getAllModulesUID().then(async (modulesUID) => {
-        //     await this.resetContainers(modulesUID);
-        // }).catch(()=>{})
+        try{
+            const allModulesUID = await this.appManager.getAllModulesUID();
+            for (const modulesUID of allModulesUID){
+                await this.resetContainers(modulesUID).catch(() => {});
+            }
+        }catch(err){
+            logger.error('Not necessary a real runtime error: ', true, err)
+        }
+        
         await db.setupDatabase().catch(()=>{})
         await db.setupExtension().catch(()=>{});
         await db.initDB(databaseDir).catch(()=>{});
         await this.configureProxy();
-        //this.configureRestApi();
+        this.configureRestApi();
 
         await this.mqttAdmin.createSupervisorRole('hubos').catch(()=>{});
         await this.mqttAdmin.createSupervisorRole('openHab').catch(()=>{});
         await this.mqttAdmin.createClient('hubosClient','hubosClient','','hubos client',['hubos']).catch(()=>{})
         await this.mqttAdmin.createClient('openhabClient','openhabClient','','openHab client',['openHab']).catch(()=>{})
-        const brokerThing = await this.openhabAPI.getBrokerThing();
         await this.extractApps();
+        console.log('-e-----')
         let modulesUID = [];
         for (let app of this.getApps()){
             if (!app.app.appExist){
                 for (let module of app.app.getModules()){
                     logger.info(`mqtt configuration for module ${module.moduleId}`,true)
                     await this.mqttAdmin.createModuleRole(module.moduleId, getRoleFromModule(module.moduleId));
-                    await this.mqttAdmin.createClient(module.moduleId, module.moduleId, module.moduleId, `client module: ${module.moduleId}`,[getRoleFromModule(module.moduleId)]);
+                    await this.mqttAdmin.createClient(module.moduleId, module.moduleId, '', `client module: ${module.moduleId}`,[getRoleFromModule(module.moduleId)]);
 
                     logger.info(`openhab configuration for module ${module.moduleId}`,true)
                     const topicItem = await this.openhabAPI.createTopicItem(getItemNameFromModule(module.moduleId),getItemNameFromModule(module.moduleId));
@@ -144,7 +149,7 @@ export default class HCore{
                 logger.info(`sanbox creation and run for module ${replaceDashesWithUnderscores(module.moduleId)}`,true);
                 const tokens = createJWT(module.moduleId);
                 const modulesPath = join(app.app.appPath, 'modules')
-                const pack = await this.sandboxManager.buildTarStream(join(modulesPath, module.moduleName),app.app.configPath, tokens)
+                const pack =  await this.sandboxManager.buildTarStream(join(modulesPath, module.moduleName),app.app.configPath, tokens)
                 await this.sandboxManager.buildImageWithTar(pack, replaceDashesWithUnderscores(module.moduleId))
                 let cont = await this.sandboxManager.createContainer(replaceDashesWithUnderscores(module.moduleId))
                 this.sandboxManager.startContainer(cont);
@@ -156,12 +161,12 @@ export default class HCore{
     }
 
     async resetContainers(modulesUID){
-        await modulesUID.forEach(async (moduleUID) => {
+        for (let moduleUID of modulesUID){
             logger.info(`removing module with uid : ${moduleUID} from system`,true)
             // stop + remove all container
             await this.sandboxManager.stopAndRemoveContainer(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch((err) => {logger.error(`error deleting container: `,true, err)});
             //await this.sandboxManager.removeImage(`${replaceDashesWithUnderscores(moduleUID)}:latest`).catch((err) => {logger.error(`error deleting image: `,true, err)});
-        })
+        }
     }
 
 }
