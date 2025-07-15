@@ -51,7 +51,7 @@ export default class MqttClient{
     manageReceivedMessage(topic, message){
         if (topic === `${this.adminTopic}/response`){
             const response = JSON.parse(message);
-            logger.info(`message received on ${topic} : ${util.inspect(response, {colors: true, showHidden: true, depth:null})}`);
+            logger.info(`message received on ${topic} `);
         }
     }
 

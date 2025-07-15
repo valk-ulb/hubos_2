@@ -3,7 +3,7 @@
         "name":"ring_button_call_ring_handler_module",
         "description":"when ring button triggered call ring handler with auths",
         "when":{
-            "event": "device.ringButtonItem",
+            "event": "device.ringSwitchItem",
             "context": "updated",
             "value": "ON"
         },

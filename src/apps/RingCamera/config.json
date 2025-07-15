@@ -1,24 +1,34 @@
 {
     "configuration":{
         "devices":{
-            "ringButtonItem":{
-                "UID": "ddd",
-                "type" : "ring_button_itemName",
-                "description": "itemName of the ring button item on openhab."
+            "ringSwitchItem":{
+                "UID": "Ring",
+                "type" : "ring_switch_itemName",
+                "description": "itemName of the ring switch item on openhab."
             }
         },
         "servers":{
             "telegramServer":{
-                "host": "www.google.com",
+                "host": "api.telegram.org:443",
                 "description": "telegram server to send messages"
             },
             "CameraUrl":{
-                "host": "www.example.com",
-                "description": "IPCamera (openhab thing) url to mjpeg"
+                "host": "10.0.2.15:8080",
+                "description": "Openhab server IP"
             }
         },
         "others":{
-
+            "TelegramBot":{
+                "token": "7784419515:AAFLZ-tDKKcoWlW0Ulm53eBs0u5OGgF6nqg",
+                "chatId": "6829913651",
+                "description": "Telegram API token"
+            },
+            "DoorbellCamera":{
+                "mjpegUrl": "http://10.0.2.15:8080/ipcamera/2693636841/ipcamera.mjpeg",
+                "mjpegUrlDescription":"IPCamera url to mjpeg stream (ipcamera.mjpeg)",
+                "snapshotUrl": "http://10.0.2.15:8080/ipcamera/2693636841/ipcamera.jpg",
+                "snapshotDescription":"IPCamera url to snapshot stream (ipcamera.jpg)"
+            }
         }
     }
 }

@@ -52,7 +52,7 @@ program
     .action(async (options) => {
         process.env.NODE_ENV = options.debug ? 'dev' : 'production';
         //logger.info('running api server')
-        //hcore.configureRestApi();
+        hcore.configureRestApi();
         hcore.configureProxy();
     })
 
