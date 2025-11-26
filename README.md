@@ -1,244 +1,214 @@
-# HubOS - a private-by-design smart hub operating system
+# HubOS Installation Guide
 
-## Prerequisites
+## 1. Install Ubuntu Server
+Install Ubuntu Server 24.04.3 LTS normally.
 
-HubOS depends on several off-the-shelf components that need to be running alongside. 
-Below we describe how to properly obtain and instantiate those.
-
-### Node.js and npm 
-
-Install Node.js and npm. HubOS was tested with Node.js v16.14.2 and npm v8.10.0 but should *probably* work 
-just as fine with the latest versions of both. 
-Prefer official distribution channels instead of the ones offered by your operating system distribution.
-
-### Yarn
-
-Some modules have dependencies that can only be installed properly with `yarn` package manager. 
-So install `yarn` as well.
-
-You can do so by executing the following command:
-```
-npm install --global yarn
+## 2. Install Docker
+```bash
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 ```
 
-### Build dependencies
-
-Install additional system dependencies by executing the following command (Ubuntu):
-```
-sudo apt install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-```
-These are needed by various modules of demo applications.
-
-### Redis server
-
-We use Redis for an in-memory key-value store that is offered through an HubOS API to all the applications.
-Redis runs in a Docker container and uses a local `data` folder to store snapshots.
-
-Create a Redis docker container by executing the following script in a `docker/` folder:
-```
-./create-redis-container.sh
-```
-Note: a `data` folder will be created in the same folder where you run the script.
-
-To restart the container anytime later use the following script in a `docker/` folder:
-```
-./start-redis-container.sh
+### Add Docker apt source:
+```bash
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
 ```
 
-### MQTT server
-
-We use MQTT for message-passing between the application modules and HubOS. Along with Redis, MQTT is 
-one of the essential parts of HubOS.
-
-You can run MQTT locally as a system process or in a Docker container.
-
-The easiest way is to run it as a local process since most Linux distributions offer it as a package.
-To install it run the following command in your terminal:
-```
-sudo apt install mosquitto
-```
-This will install Mosquitto MQTT broker with default settings.
-Note, you should always consider properly configuring the broker and set up proper authentication for
-connecting clients. 
-
-### Cloud-endpoints for applications
-
-Following the cloud-first model, HubOS applications are expected to execute privacy-sensitive 
-operations locally at the hub and use cloud resources for those operations that were specifically authorized by the user.
-We offer cloud-side endpoints for local HubOS applications to connect to. 
-In production these cloud endpoints would be running in, well, a cloud. 
-For testing purposes though we run them on the same machine where HubOS applications run (or in the same cluster).
-
-**1. Butler application server aka. remote speech recognition engine**
-
-This server receives audio command that was not recognized locally and runs it through a more complex STT engine.
-The results are returned immediately on the same socket. 
-
-Go to `docker/butler-server/` folder:
-
-``` 
-cd docker/butler-server/
+### Install Docker Engine
+```bash
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-Download the STT recognition models by executing a script:
+### Add user to Docker group
+```bash
+sudo usermod -aG docker $USER
 ```
-./download-model.sh
-```
-This will download the model and scorer files and put them in a `models` folder.
 
-Install sox library (should be available on any Linux system. Tested on Ubuntu 20.04)
+### Check Docker status
+```bash
+ sudo systemctl status docker
+```
 
+### Start Docker if necessary
+```bash
+sudo systemctl start docker
 ```
-sudo apt install sox
-```
-Finally, install all the dependencies:
 
+## 3. Install Java 21
+```bash
+sudo apt install openjdk-21-jdk
 ```
+
+## 4. Install OpenHAB
+```bash
+curl -fsSL "https://openhab.jfrog.io/artifactory/api/gpg/key/public" | gpg --dearmor > openhab.gpg
+sudo mkdir /usr/share/keyrings
+sudo mv openhab.gpg /usr/share/keyrings
+sudo chmod u=rw,g=r,o=r /usr/share/keyrings/openhab.gpg
+echo 'deb [signed-by=/usr/share/keyrings/openhab.gpg] https://openhab.jfrog.io/artifactory/openhab-linuxpkg stable main' | sudo tee /etc/apt/sources.list.d/openhab.list
+sudo apt-get update
+sudo apt-get install openhab
+sudo systemctl start openhab.service
+sudo systemctl enable openhab.service
+```
+
+### Check OpenHab status
+```bash
+sudo systemctl status openhab.service
+```
+
+## 5. Install Mosquitto + Dynamic Security Plugin
+Edit `/etc/mosquitto/mosquitto.conf`:
+```
+plugin /usr/lib/x86_64-linux-gnu/mosquitto_dynamic_security.so
+plugin_opt_config_file /etc/mosquitto/dynamic-security.json
+listener 1884
+```
+
+Initialize:
+```bash
+sudo systemctl stop mosquitto
+sudo mosquitto_ctrl dynsec init /etc/mosquitto/dynamic-security.json admin-user
+sudo chown mosquitto:mosquitto /etc/mosquitto/dynamic-security.json
+sudo systemctl start mosquitto
+```
+
+## 6. Install gVisor
+```bash
+(
+  set -e
+  ARCH=$(uname -m)
+  URL=https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}
+  wget ${URL}/runsc ${URL}/runsc.sha512 ${URL}/containerd-shim-runsc-v1 ${URL}/containerd-shim-runsc-v1.sha512
+  sha512sum -c runsc.sha512 -c containerd-shim-runsc-v1.sha512
+  rm -f *.sha512
+  chmod a+rx runsc containerd-shim-runsc-v1
+  sudo mv runsc containerd-shim-runsc-v1 /usr/local/bin
+)
+sudo /usr/local/bin/runsc install
+sudo systemctl reload docker
+```
+### Test gVisor
+```bash
+sudo docker run --rm --runtime=runsc hello-world
+```
+
+## 7. Setup repo
+Clone the repo. install npm
+```bash
+sudo apt install npm
+```
+cd into the repo and install npm packages
+```bash
+cd hubos_2
 npm i
 ```
 
-and start the app server
 
-```
-node start.js
-```
+## 8. Create `.env`
+Update `API_TOKEN` and `MQTT_BROKER_THING_UID` with the real values from OpenHAB. Next chapters will show you how to find these values.
+```bash
+## POSTGRESQL 
+POSTGRES_HOST=localhost
+POSTGRES_DATABASE=hubos-db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=root
+POSTGRES_PORT=5432
 
-**2. FallWatch application server aka. remote senior care service**
+## OPENHAB
+OPENHAB_URL=localhost
+OPENHAB_PORT=8080
+MQTT_BROKER_THING_UID=
 
-This server receives the camera video stream from the local FallWatch application running on the hub
-when the latter detects a fall event. The server does not save the received video bytes. The socket connection
-is terminated after the last byte of the video. 
+# OPENHAB API
+API_TOKEN=
 
-Go to `docker/fallwatch-server/` folder:
-```
-cd docker/fallwatch-server/
-```
-Install dependencies:
-```
-npm i
-```
-and start the server
-```
-node start-socket-server.js
-```
+## HUBOS
+HUBOS_URL=127.0.0.1 # Node.js 17+ no longer prefers IPv4 over IPv6 for DNS lookups. E.g. It's not guaranteed that localhost will be resolved to 127.0.0.1 – it might just as well be ::1 (or some other IP address).
+HUBOS_PORT=9090
+HUBOS_PROXY_PORT=3000
 
-**3. SmartCamera application aka remote file storage service**
+## DOCKER
+HOST_DOCKER_SUBNET=172.25.0.0/16
+HOST_DOCKER_GATEWAY=172.25.0.1
+HOST_DOCKER_IP=172.17.0.1
+HOST_DOCKER_PORT=9091
 
-This server receives a camera frame from the local application.
+## MQTT
+MQTT_HOST=localhost
+MQTT_PORT=1884
+MQTT_ADMIN_USERNAME=admin-user
+MQTT_ADMIN_PASSWORD=admin
 
-Go to `docker/smartcamera-server/` folder:
-```
-cd docker/smartcamera-server/
-```
-and start the server
-```
-node start.js
-```
+MQTT_OPENHAB_CLIENT_USERNAME=openhabClient
+MQTT_OPENHAB_CLIENT_PASSWORD=openhabClient
 
-### HubOS core
+MQTT_HUBOS_CLIENT_USERNAME=hubosClient
+MQTT_HUBOS_CLIENT_PASSWORD=hubosClient
 
-Go to `system/` folder:
-```
-cd system/
-```
-Install the dependencies
-```
-yarn
-```
-Create an `.env` file in the main `system/` folder with all the environment variables listed
-```
-touch .env
-```
-and put the following data in it:
-```
-BUTLER_CLOUD_SERVER=0.0.0.0
-FALLWATCH_CLOUD_SERVER=0.0.0.0
-SMARTCAMERA_CLOUD_SERVER=0.0.0.0
-```
-Note, when using a cluster of machines modify the IP addresses accordingly.
+## JWT
 
-## Running
-
-HubOS repository contains 4 demo apps:
-- **Butler app**: performs locall speech-to-text (STT) recognition and controls local devices. When the command is not recognized the app sends a raw audio to a remote STT engine.
-- **ButlerLocal app**: an alternative version of the previous app but with only local STT functionality. No cloud services involved. 
-- **FallWatch app**: performs basic fall detection and starts video camera streaming to a care agent service when it detects a fall.
-- **SmartCamera app**: performs local face recognition of people in front of the front door and sends snapshots to the home owner if it detects an unknown face.
-
-You can run **all of these apps at the same time** (excluding ButlerLocal app) by executing the following command in the main `system/` folder:
+ACCESS_TOKEN_SECRET=f0b02766593f9ded717e8301c3012c9b07f67c86581d039da2b1fc7459e98303c1c389725b8b6ca57446dc11b72cb1c7b58f71f0887100ae41955fec4facb8e7
+REFRESH_TOKEN_SECRET=5bc2168fe2ebbf4a946c9ffcfafeccc8bf4a960139b3e2eb0f2e73f592adaab846f0750f0584262127e871effbc9ce5051c9ed6ca6fdda078bcdbc4d06e73f1f
+### time before jwt expiration (can be : 5s,2m,1h,1.5d, ... )
+ACCESS_TIME_BEFORE_EXPIRATION=60s
+REFRESH_TIME_BEFORE_EXPIRATION=1d
 ```
-npm run dev     # for development mode
-```
-or 
-```
-npm run prod    # for production mode (no outputs)
-```
-Note, with this command HubOS will execute each app **exactly once** and remain in a standby mode.
-
-If you want to **execute each app individually**, run the following command:
-```
-npm run <appname>  
-```
-e.g.
-```
-npm run butler  # or butlerlocal or fallwatch or smartcamera
-```
-This command executes the specified app in a dev mode by default.
-
-## Evaluation
-
-### Runtime performance of demo applications within HubOS
-
-In this experiment we evaluate the runtime performance of demo applications, that is how much time in ms it takes to execute each of the operation in an application logic.
-
-To run a given application in an evaluation mode execute the following command:
-```
-npm run eval-butler     # or 'eval-fallwatch' or 'eval-smartcamera'
-```
-This will execute a given app 20 times after a 15 times warmup. 
-Feel free to change these configs in `start.js` file. 
-The evaluation runs in minimal output mode. If all goes well you should see the output similar to this one:
-```
-$ npm run eval-butler
-
-> hubos-core@0.0.1 eval-butler
-> NODE_ENV=production node start eval Butler
-
-Finished experiments.
-1, 1.35, 0.9333020044867296     # 'butler-app-fetching-audio' operation took 1.35 ms with stdev=0.933 ms
-2, 134.2, 24.75904938231251     # 'butler-app-speech-recognition' operation took 134.2 ms with stdev=24.759 ms
-3, 2.7, 0.6569466853317864      # ...
-4, 878.15, 15.550511922526265
-5, 0.25, 0.4442616583193193
-6, 0.05, 0.22360679774997894
-[Map Iterator] {
-  'butler-app-fetching-audio',
-  'butler-app-speech-recognition',
-  'event-engine-processing-event',
-  'butler-app-sending-audio-to-cloud',
-  'butler-app-controlling-thermostat',
-  'butler-app-sending-command-to-va'
-}
-```
-There were 6 operations in Bulter application logic that we were measuring.
-Their names are stated in the `Map Iterator` in the order of their execution.
-Above, for each operation, numbered from 1 to 6, there is an average runtime (in ms) and its stdev value (also in ms).
-
-Note, some operations are very fast. For instance a 'butler-app-controlling-thermostat' one. 
-That is due to the fact that HubOS does not actually connect to the Thermostat to change its state. 
-Instead it just assumes that this state change will be done on a higher API level.
-The operation itself is asynchronous and returns immediately. 
-
-Running HubOS application in an evaluation mode generates a **csv file** with all the above measurements in the main project folder.
-The file generated after running Butler app in an evaluation mode would have the following name for example: `eval-results-Butler-hubos.csv`.
 
 
+## 9. Install PostgreSQL
+```bash
+sudo apt install postgresql
+sudo -i -u postgres
+psql
+ALTER USER postgres PASSWORD 'root';
+CREATE DATABASE "hubos-db";
+\q
+logout
+```
+> The database creation (`CREATE DATABASE "hubos-db";`) must be done at least once on a fresh system.
+## 10. Configure OpenHAB
 
-### Runtime performance of demo applications as standalone apps
+### Login
 
-Follow the instructions at the designated [README.md](evaluation/standalone-apps/README.md) file. 
+1.  Open the OpenHAB web interface: `http://YOUR_IP:8080/`\
+2.  Create an account:
+    -   **Username:** `admin`\
+    -   **Password:** `admin`\
+3.  Skip the setup wizard.
 
-### Runtime performance of demo applications as cloud apps/microservices
+### Create API Token
 
-Follow the instructions at the designated [README.md](evaluation/cloud-apps/README.md) file. 
+1.  Click your **profile** (bottom-left).
+2.  Select **"Create New API Token"**.
+    -   **Username:** `admin`
+    -   **Password:** `admin`
+    -   **Token Name:** `hubOS`
+3.  **Do not close the page yet.**
+4.  Copy the generated token and add it to your `.env` file
 
+### MQTT Setup
+
+1.  Go to **Add-on Store** → Install **MQTT Binding**
+2.  Navigate to **Settings → Things → + → MQTT Binding → MQTT Broker**
+3.  Open **Advanced Settings** and set:
+    -   **Broker Hostname/IP:** `localhost`
+    -   **Username:** `openhabClient`
+    -   **Password:** `openhabClient`
+4.  Create the Thing and copy its **Thing UID**.
+5.  Add it to your `.env`
+
+## 11. Start HubOS
+```bash
+node src/start.js start --debug --reset
+```
