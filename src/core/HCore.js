@@ -9,7 +9,7 @@ import OpenhabAPI from '../openhabAPI/OpenhabAPI.js';
 import MqttAdmin from '../mqtt/MqttAdmin.js'
 import * as dotenv from "dotenv";
 import { createJWT } from '../utils/jwtUtil.js';
-import { getHubosTopicFromModule, getItemNameFromModule, getRoleFromModule, replaceDashesWithUnderscores, getRuleUID, getModuleAuthTopic } from '../utils/NameUtil.js';
+import { getHubosTopicFromModule, getItemNameFromModule, getRoleFromModule, replaceDashesWithUnderscores, replaceUnderscoresWithDashes, getRuleUID, getModuleAuthTopic } from '../utils/NameUtil.js';
 import permissionManager from '../Controller/PermissionManager.js';
 import hproxy from './HProxy.js';
 import hserver from './Hserver.js';
@@ -148,10 +148,16 @@ export default class HCore{
                 modulesUID.push(module.moduleId);
                 logger.info(`sanbox creation and run for module ${replaceDashesWithUnderscores(module.moduleId)}`,true);
                 const tokens = createJWT(module.moduleId);
+                logger.info("Tokens created")
                 const modulesPath = join(app.app.appPath, 'modules')
+                logger.info("Build tar stream")
+                const safeImageName = replaceUnderscoresWithDashes(module.moduleId).toLowerCase();
                 const pack =  await this.sandboxManager.buildTarStream(join(modulesPath, module.moduleName),app.app.configPath, tokens)
-                await this.sandboxManager.buildImageWithTar(pack, replaceDashesWithUnderscores(module.moduleId))
-                let cont = await this.sandboxManager.createContainer(replaceDashesWithUnderscores(module.moduleId))
+                logger.info("Build image with tar")
+                await this.sandboxManager.buildImageWithTar(pack, safeImageName)
+                logger.info("Image built")
+                let cont = await this.sandboxManager.createContainer(safeImageName)
+                logger.info("Container created")
                 this.sandboxManager.startContainer(cont);
                 logger.info('sanbox creation and start is a success',true)
             }
