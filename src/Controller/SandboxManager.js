@@ -8,6 +8,7 @@ import tarStream from 'tar-stream'
 import hproxy from "../core/HProxy.js";
 import hserver from "../core/Hserver.js";
 import util from 'util'
+import { PassThrough } from 'stream'
 import { replaceUnderscoresWithDashes, getHubosTopicFromModule, getModuleSupervTopic } from "../utils/NameUtil.js";
 export default class SandboxManager {
 
@@ -73,9 +74,8 @@ export default class SandboxManager {
 
     async buildTarStream(modulePath, configPath, tokens){
         let pack = tarStream.pack()
-        
+
         pack = this.addDirOnDiskToTar(pack, modulePath)
-        
 
         const extra = path.resolve(configPath);
         pack.entry({name: 'config.json'}, fs.readFileSync(extra));
@@ -85,8 +85,28 @@ export default class SandboxManager {
             pack.entry({name: '.env'}, fs.readFileSync(projectEnv));
         }
         pack.entry({name: 'tokens.json'},JSON.stringify(tokens));
+
+        // pipe through a PassThrough to ensure consumers get a clean stream
+        const pass = new PassThrough();
+        pack.pipe(pass);
+
+        // debug listeners to help diagnose hangs
+        pack.on('error', (err) => {
+            logger.error('tar pack stream error', true, err)
+        })
+        pack.on('end', () => {
+            logger.info('tar pack stream ended')
+        })
+
+        pass.on('error', (err) => {
+            logger.error('tar passthrough stream error', true, err)
+        })
+        pass.on('end', () => {
+            logger.info('tar passthrough stream ended')
+        })
+
         pack.finalize();
-        return pack;
+        return pass;
     }
 
     /**
@@ -103,7 +123,19 @@ export default class SandboxManager {
             }
         })
         logger.info(`image : ${moduleUID}:latest builded`);
-        await new Promise((resolve, reject) => {
+        // attach basic listeners for debugging
+        if (stream && typeof stream.on === 'function'){
+            stream.on('error', (err) => {
+                logger.error('docker build stream error', true, err)
+            })
+            stream.on('end', () => {
+                logger.info('docker build stream ended')
+            })
+        }
+
+        // follow progress but avoid hanging forever: use a timeout
+        const BUILD_TIMEOUT_MS = process.env.BUILD_TIMEOUT_MS ? parseInt(process.env.BUILD_TIMEOUT_MS) : 120000;
+        const follow = new Promise((resolve, reject) => {
             this.docker.modem.followProgress(
                 stream,
                 (err, res) => err ? reject(err) : resolve(res),
@@ -111,7 +143,11 @@ export default class SandboxManager {
                     if (event.stream) process.stdout.write(event.stream);
                 }
             );
-        }).catch((err) => {
+        })
+
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error(`docker build timeout after ${BUILD_TIMEOUT_MS}ms`)), BUILD_TIMEOUT_MS));
+
+        await Promise.race([follow, timeout]).catch((err) => {
             throw new SandboxError(`Error while building the image for module ${moduleUID}`,err);
         });
         logger.info(`Image ${moduleUID}:latest built with success`);
