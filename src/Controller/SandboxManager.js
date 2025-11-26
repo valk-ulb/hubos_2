@@ -79,6 +79,11 @@ export default class SandboxManager {
 
         const extra = path.resolve(configPath);
         pack.entry({name: 'config.json'}, fs.readFileSync(extra));
+        // include project .env if present so Dockerfile's COPY .env . works
+        const projectEnv = path.resolve(process.cwd(), '.env');
+        if (fs.existsSync(projectEnv)){
+            pack.entry({name: '.env'}, fs.readFileSync(projectEnv));
+        }
         pack.entry({name: 'tokens.json'},JSON.stringify(tokens));
         pack.finalize();
         return pack;
@@ -106,7 +111,10 @@ export default class SandboxManager {
                     if (event.stream) process.stdout.write(event.stream);
                 }
             );
-        });    
+        }).catch((err) => {
+            throw new SandboxError(`Error while building the image for module ${moduleUID}`,err);
+        });
+        logger.info(`Image ${moduleUID}:latest built with success`);
     }
 
     async createContainer(imageName){
