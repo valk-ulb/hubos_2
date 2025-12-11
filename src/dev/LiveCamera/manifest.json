@@ -1,0 +1,12 @@
+{
+    "name": "LiveCamera",
+    "description": "Live camera sending a video stream to the authorized apps users and apps.",
+    "type": "liveCamera",
+    "modules":[
+        {
+            "name": "stream_sender",
+            "type": "sender",
+            "description": "sender module continuously streaming video to authorized users and apps"
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+services:
+  fake-camera:
+    build: ./camera
+    container_name: fake-camera
+    ports:
+      - "8554:8554"
+      - "8888:8888"
+      - "8889:8889"
+      - "8890:8890/udp"
+      - "8189:8189/udp"
+    environment:
+      - MTX_RTSPTRANSPORTS=tcp
+      - MTX_WEBRTCADDITIONALHOSTS=100.114.103.52
+    restart: unless-stopped
+
+  blur-camera:
+    build: ./blur
+    container_name: blur-camera
+    depends_on:
+      - fake-camera
+    environment:
+      - INPUT_STREAM=rtsp://fake-camera:8554/mystream?rtsp_transport=tcp
+      - OUTPUT_STREAM=rtsp://fake-camera:8554/blurred?rtsp_transport=tcp
+    restart: unless-stopped
