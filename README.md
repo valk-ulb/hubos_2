@@ -1,244 +1,305 @@
-# HubOS - a private-by-design smart hub operating system
+# HubOS 2.0 - a Local-first, private-by-design smart hub operating system
 
-## Prerequisites
+## overview 
+**HubOS** is a *private-by-design* orchestration system that integrates seamlessly with the open-source home automation platform **OpenHAB**. Together, they form a new, security-focused home automation environment that remains fully aligned with the values and philosophy promoted by OpenHAB: openness, transparency, user autonomy, and independence from vendor lock-in.
 
-HubOS depends on several off-the-shelf components that need to be running alongside. 
-Below we describe how to properly obtain and instantiate those.
+HubOS extends OpenHAB by providing a secure execution runtime for modular applications and automation components. Its design follows a local-first philosophy, ensuring that all processing, decision-making, and data handling occur on the user's own infrastructure whenever possible. This approach enhances privacy, reduces external dependencies, and reinforces the long-term sustainability of the system. 
 
-### Node.js and npm 
+Built around strict principles, HubOS isolates modules, enforces controlled communication channels, and standardizes configuration and deployment flows. It operates as a complementary layer to OpenHAB, enabling: 
+- Safe execution of third-party or custom applications,
+- Fine-grained security controls, and 
+- Extensible automation capabilities.
 
-Install Node.js and npm. HubOS was tested with Node.js v16.14.2 and npm v8.10.0 but should *probably* work 
-just as fine with the latest versions of both. 
-Prefer official distribution channels instead of the ones offered by your operating system distribution.
+This project is the result of the master's thesis "HubOS: Improving and Redesigning a Local-First, Privacy-by-Design Operating System for Smart Home Applications", in which HubOS was redisigned, hardened, and prepared for production-grade use as a trust-enhancing companion system to OpenHAB
 
-### Yarn
+## Installation Guide
+### Prerequisites
 
-Some modules have dependencies that can only be installed properly with `yarn` package manager. 
-So install `yarn` as well.
+HubOS has so far been tested exclusively on Linux systems (Ubuntu >= 22.04.5 lts). 
+As a result, we cannot currently guarantee whether the installation procedure differs on **Windows** or **macOS** environments. Compatibility testing for these platforms is planned and the README will be updated progressively as findings become available. 
 
-You can do so by executing the following command:
+To run HubOS, the following dependencies must be installed beforehand: 
+- [OpenHAB](https://www.openhab.org/download/) >= 5.0.3,
+- [Java SE Development Kit](https://www.oracle.com/fr/java/technologies/downloads/) >= 21,
+- [Node.js](https://nodejs.org/en/download) >= 24.12.0,
+- npm >= 11.6.4,
+- [Mosquitto](https://mosquitto.org/download/) >= 2.0.22,
+- [Docker Engine](https://docs.docker.com/engine/install/) - latest release,
+- [gvisor](https://gvisor.dev/docs/user_guide/install/) - latest release.
+- [PostgreSQL](https://www.postgresql.org/download/) >14.20
+
+### Configurations
+#### Step I. Configure Mosquitto [Dynamic Security Plugin](https://mosquitto.org/documentation/dynamic-security/)
+
+HubOS relies on the *Mosquitto Dynamic Security plugin to manage MQTT *access control* for its modules. 
+This plugin allows HubOS to assign fine-grained permissions and restrict which MQTT topics each module can publish to or subscribe to.  
+
+> ###### ⚠️ Important:
+>If your host is already running a Mosquitto MQTT broker, enabling this plugin and changing the configuration may alter the behaviour of your existing Mosquitto instance. Make sure you understand the impact on your current setup before proceeding.
+
+For the full and up-to-date configuration details, please refer to the official Mosquitto documentation: [Dynamic Security Plugin Documentation](https://mosquitto.org/documentation/dynamic-security/#installation)
+
+If you just want a minimal setup compatible with HubOS, you can follow these steps:
+
+##### 1. Enable the plugin in the Mosquitto configuration
+
+Edit your Mosquitto configuration file (typically located at `/etc/mosquitto/mosquitto.conf`) and add:
 ```
-npm install --global yarn
+plugin path/to/mosquitto_dynamic_security.so
+plugin_opt_config_file path/to/dynamic-security.json
 ```
+- It is recommended to use `per_listener_settings` false with this plugin so that all listeners share the same authentication and access control configuration.
+- `path/to/dynamic-security.json` is expected to be in the same directory as the main Mosquitto configuration file, unless otherwise specified.
+- On Linux you would expect the plugin library to be installed to `/usr/lib/x86_64-linux-gnu/mosquitto_dynamic_security.so` or a similar path, but this will vary depending on the particular distribution and hardware in use.
 
-### Build dependencies
 
-Install additional system dependencies by executing the following command (Ubuntu):
+##### 2. Initialize the dynamic-security.json file
+
+Create the initial Dynamic Security configuration file by running:
 ```
-sudo apt install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-```
-These are needed by various modules of demo applications.
-
-### Redis server
-
-We use Redis for an in-memory key-value store that is offered through an HubOS API to all the applications.
-Redis runs in a Docker container and uses a local `data` folder to store snapshots.
-
-Create a Redis docker container by executing the following script in a `docker/` folder:
-```
-./create-redis-container.sh
-```
-Note: a `data` folder will be created in the same folder where you run the script.
-
-To restart the container anytime later use the following script in a `docker/` folder:
-```
-./start-redis-container.sh
-```
-
-### MQTT server
-
-We use MQTT for message-passing between the application modules and HubOS. Along with Redis, MQTT is 
-one of the essential parts of HubOS.
-
-You can run MQTT locally as a system process or in a Docker container.
-
-The easiest way is to run it as a local process since most Linux distributions offer it as a package.
-To install it run the following command in your terminal:
-```
-sudo apt install mosquitto
-```
-This will install Mosquitto MQTT broker with default settings.
-Note, you should always consider properly configuring the broker and set up proper authentication for
-connecting clients. 
-
-### Cloud-endpoints for applications
-
-Following the cloud-first model, HubOS applications are expected to execute privacy-sensitive 
-operations locally at the hub and use cloud resources for those operations that were specifically authorized by the user.
-We offer cloud-side endpoints for local HubOS applications to connect to. 
-In production these cloud endpoints would be running in, well, a cloud. 
-For testing purposes though we run them on the same machine where HubOS applications run (or in the same cluster).
-
-**1. Butler application server aka. remote speech recognition engine**
-
-This server receives audio command that was not recognized locally and runs it through a more complex STT engine.
-The results are returned immediately on the same socket. 
-
-Go to `docker/butler-server/` folder:
-
-``` 
-cd docker/butler-server/
+mosquitto_ctrl dynsec init path/to/dynamic-security.json <admin-username>
 ```
 
-Download the STT recognition models by executing a script:
-```
-./download-model.sh
-```
-This will download the model and scorer files and put them in a `models` folder.
+This command will:
 
-Install sox library (should be available on any Linux system. Tested on Ubuntu 20.04)
+- create the dynamic-security.json file, and
 
-```
-sudo apt install sox
-```
-Finally, install all the dependencies:
+- define an initial admin user (admin-user) that you can use to manage roles, clients, and topic access.
 
-```
-npm i
-```
+>###### IMPORTANT
+>It is important to verify the permissions of the dynamic-security.json file. Make sure it is readable and writable by Mosquitto by running: `$ chmod 666 /path/to/dynamic-security.json`
 
-and start the app server
 
-```
-node start.js
-```
+>###### 🔐 Security Recommendation
+>It is highly recommended to choose an admin username that is unique (not “admin”, “root”, or other common names) and a strong, randomly generated password.
+This significantly increases the security of your system and prevents unauthorized access to MQTT topic management.
 
-**2. FallWatch application server aka. remote senior care service**
 
-This server receives the camera video stream from the local FallWatch application running on the hub
-when the latter detects a fall event. The server does not save the received video bytes. The socket connection
-is terminated after the last byte of the video. 
+Once the plugin is active and the configuration file initialized, HubOS will be able to integrate with the Mosquitto Dynamic Security API to manage access control policies for its modules.
 
-Go to `docker/fallwatch-server/` folder:
+##### 3. Restart mosquitto.service
 ```
-cd docker/fallwatch-server/
-```
-Install dependencies:
-```
-npm i
-```
-and start the server
-```
-node start-socket-server.js
+$ sudo systemctl restart mosquitto.service
 ```
 
-**3. SmartCamera application aka remote file storage service**
-
-This server receives a camera frame from the local application.
-
-Go to `docker/smartcamera-server/` folder:
+#### Step II. Configure gVisor
+To install gVisor as a Docker runtime, run the following commands:
 ```
-cd docker/smartcamera-server/
-```
-and start the server
-```
-node start.js
+$ /usr/local/bin/runsc install
+$ sudo systemctl reload docker
+$ docker run --rm --runtime=runsc hello-world
 ```
 
-### HubOS core
+#### Step III. Configure OpenHAB
+1. Navigate with a web browser to `http://<ip-address>:8080`
+2. Continue by following the tutorial to get started
+##### A. Create a new API token
+To allow HubOS to authenticate and interact with your OpenHAB instance, you must create an API token.
+1. Open your OpenHAB profile page `http://localhost:8080/profile/`
+2. Click on “Create new API token”
+    ![create new api token step 1](/images/openhab_create_new_api_token_step_1.png)
+3. Complete the form
+    - Enter your OpenHAB username
+    - Enter your OpenHAB password
+    - Choose a name for the token
+    - Validate and confirm
+    
+    ![create new api token step 2](/images/openhab_create_new_api_token_step_2.png)
+> OpenHAB will then generate the token. This token is shown only once. Make sure to copy and store it securely.
 
-Go to `system/` folder:
-```
-cd system/
-```
-Install the dependencies
-```
-yarn
-```
-Create an `.env` file in the main `system/` folder with all the environment variables listed
-```
-touch .env
-```
-and put the following data in it:
-```
-BUTLER_CLOUD_SERVER=0.0.0.0
-FALLWATCH_CLOUD_SERVER=0.0.0.0
-SMARTCAMERA_CLOUD_SERVER=0.0.0.0
-```
-Note, when using a cluster of machines modify the IP addresses accordingly.
+![create new api token step 3](/images/openhab_create_new_api_token_step_3.png)
+##### B. Configure MQTT Client
+1. Navigate to Settings → Things → +
 
-## Running
+   ![Adding a MQTT Broker step 1](/images/openhab_add_broker_step_1.png)
 
-HubOS repository contains 4 demo apps:
-- **Butler app**: performs locall speech-to-text (STT) recognition and controls local devices. When the command is not recognized the app sends a raw audio to a remote STT engine.
-- **ButlerLocal app**: an alternative version of the previous app but with only local STT functionality. No cloud services involved. 
-- **FallWatch app**: performs basic fall detection and starts video camera streaming to a care agent service when it detects a fall.
-- **SmartCamera app**: performs local face recognition of people in front of the front door and sends snapshots to the home owner if it detects an unknown face.
+2. Click on Install Bindings
 
-You can run **all of these apps at the same time** (excluding ButlerLocal app) by executing the following command in the main `system/` folder:
+    ![Adding a MQTT Broker step 2](/images/openhab_add_broker_step_2.png)
+
+3. Search for "MQTT" and install MQTT Binding by openHAB
+
+    ![Adding a MQTT Broker step 3](/images/openhab_add_broker_step_3.png)
+
+4. Go back to Settings → Things and click on the installed MQTT Binding
+
+    ![Adding a MQTT Broker step 4](/images/openhab_add_broker_step_4.png)
+
+5. Add a new MQTT Broker
+
+    ![Adding a MQTT Broker step 5](/images/openhab_add_broker_step_5.png)
+
+6. Enter the hostname/IP and used port of your Mosquitto broker instance 
+
+    ![Adding a MQTT Broker step 6](/images/openhab_add_broker_step_6.png)
+  
+    > If your MQTT broker is running on localhost (and therefore does not support hostname validation via TLS certificates), you must disable the “Hostname validation” option in the MQTT Broker configuration.
+    > This ensures that OpenHAB can successfully establish a connection to the local MQTT broker.
+
+7. In the Username and Password fields, insert the credentials you want that OpenHAB should use to connect to the Mosquitto broker
+
+    ![Adding a MQTT Broker step 7](/images/openhab_add_broker_step_7.png)
+
+8.  Save the MQTT Broker Thing and take note of the Thing UID of the MQTT Broker
+   
+    >You will notice that the Thing status is OFFLINE or shows an error. This is completely normal because the credentials required to connect to the MQTT broker are not yet created (they will be generated during HubOS’s first execution).
+
+    ![Adding a MQTT Broker step 8](/images/openhab_add_broker_step_8.png)
+
+#### Step IV. Create a Database for HubOS.
+run the following command : 
 ```
-npm run dev     # for development mode
+$ psql -U postgres -c "CREATE DATABASE hubos-db;"
+```
+
+#### Step V. Configure a Docker Network
+
+##### Creating the Docker Network for HubOS
+An important step is to create the dedicated Docker network that will be used by the containers started by HubOS.
+
+To create the network, run:
+```
+$ docker network create -d bridge <hubos-network-name>
+```
+You are free to choose any value for <hubos-network-name>.
+This command will print a network ID; the first characters of this ID correspond to the identifier of the new network interface that has been created.
+
+![Create a new Docker network](/images/openhab_docker_network_step_1.png)
+
+You can verify that the network was successfully created with:
+```
+$ docker network ls
+```
+
+![docker network ls](/images/openhab_docker_network_step_3.png)
+
+
+To find the exact name of the new network interface on the host, run:
+```
+$ ifconfig
+```
+
+![ifconfig](/images/openhab_docker_network_step_2.png)
+
+
+In our case, the interface name is: *br-8bdb0dd075ea*.
+
+##### Adding isolation iptables rules for the HubOS network
+The last step is to add iptables isolation rules specifically for this Docker network.
+
+Run the following commands:
+```
+iptables --flush DOCKER-USER
+iptables -A DOCKER-USER -d 127.0.0.1/32 -i br-8bdb0dd075ea -j ACCEPT
+iptables -A DOCKER-USER -i br-8bdb0dd075ea -o lo -j REJECT --reject-with icmp-port-unreachable
+iptables -A DOCKER-USER -i br-8bdb0dd075ea -o br-8bdb0dd075ea -j REJECT --reject-with icmp-port-unreachable
+iptables -A DOCKER-USER -j RETURN
+```
+You can check that the rules have been correctly applied with:
+```
+iptables --list-rules DOCKER-USER
+```
+This allows you to verify that the isolation rules for the HubOS Docker network are now active.
+
+![iptables --list-rules DOCKER-USER](/images/openhab_docker_network_step_4.png)
+
+#### Step VI. Configure HubOS
+
+HubOS configuration is done through the .env file located at the root of the project.
+
+The first step is to copy the `.env.example` file and rename it to `.env` in the root directory of the project:
+
+```
+$ cp .env.example .env
+```
+
+The following sections will explain each element of the .env file in detail.
+
+##### A. PostgreSQL
+- **POSTGRES_HOST**: Specifies the hostname or IP address of the PostgreSQL server that HubOS should connect to. 
+  - If running on the same host: use `localhost`
+- **POSTGRES_DATABASE**: Defines the name of the PostgreSQL database used by HubOS. 
+  - This database must exist before starting HubOS. We decided to name it `hubos_db`
+- **POSTGRES_USER**: The PostgreSQL username that HubOS will use for authentication when connecting to the database.
+- **POSTGRES_PASSWORD**: The password associated with the PostgreSQL user.
+- **POSTGRES_PORT**: The port on which PostgreSQL is running.
+  - By default: `5432`
+##### B. OpenHAB
+- **OPENHAB_URL**: Specifies the hostname or IP address of your OpenHAB instance.
+  - If running on the same host: use `localhost`
+- **OPENHAB_PORT**: Defines the port on which OpenHAB is accessible.
+  - The default OpenHAB port is `8080`
+- **MQTT_BROKER_THING_UID**: Defines the UID of the MQTT Broker Thing configured inside OpenHAB.
+  - This value must correspond to the Thing UID of the MQTT Broker created during **step III.B** of the OpenHAB configuration process. Example value: `mqtt:broker:mybroker`
+##### C. HubOS
+
+- HUBOS_URL: Specifies the hostname that will be used by the HubOS instance
+  - This is the address through which other services or clients can reach HubOS.
+- HUBOS_PORT: Defines the port on which the HubOS instance will run.
+  - This is the main port used for HubOS internal services and communication.
+- HUBOS_PROXY_PORT: Specifies the port that HubOS will use for its proxy component.
+##### D. Docker
+- HOST_DOCKER_IP: Specifies the IP address of the host machine where Docker Engine is running. 
+  - This address is used by HubOS to communicate with Docker-related services. 
+- HOST_DOCKER_PORT: Defines the port used by the Docker-related service exposed on the host.
+##### E. MQTT
+- MQTT_HOST: Specifies the hostname or IP address of your Mosquitto broker instance.
+- MQTT_PORT: Defines the port on which Mosquitto is accessible
+  - The default Mosquitto port is `1883`
+- MQTT_ADMIN_USERNAME: The administrator username used to authenticate with the Mosquitto Dynamic Security Plugin.
+
+- MQTT_ADMIN_PASSWORD: The password associated with the MQTT admin user
+
+- MQTT_OPENHAB_CLIENT_USERNAME: Insert the username that you used and defined when creating the OpenHAB MQTT Broker Thing.
+- MQTT_OPENHAB_CLIENT_PASSWORD: Insert the password that you used and defined when creating the OpenHAB MQTT Broker Thing.
+
+- MQTT_HUBOS_CLIENT_USERNAME: Insert the MQTT client username that HubOS will use to interact with the MQTT broker.
+- MQTT_HUBOS_CLIENT_PASSWORD: The password associated with the HubOS MQTT client user.
+
+> HubOS will use this field to automatically create the MQTT client for the HubOS and OpenHAB instance.
+##### F. JWT
+
+This feature will be implemented in a future release.
+For now, no configuration is required.
+
+#### Step VII. Run HubOS
+
+It is possible that your Docker Engine requires root privileges to run containers.
+In this case, you must add the user running HubOS to the docker group so it can interact with the Docker daemon without using sudo.
+
+You can do this by running:
+
+```
+sudo usermod -aG docker $USER
+```
+After running this command, log out and log back in (or use newgrp docker) to apply the group changes.
+
+From the root of the project directory, install all required dependencies using:
+```
+npm install
+```
+
+The project can then be executed using the following commands:
+
+- Development mode:
+    ```
+    npm run dev
+    ```
+- Production mode:
+    ```
+    npm run prod
+    ```
+
+You can also use the --reset argument to clear all data created by HubOS:
+```
+npm run dev -- --reset
 ```
 or 
 ```
-npm run prod    # for production mode (no outputs)
+npm run prod -- --reset
 ```
-Note, with this command HubOS will execute each app **exactly once** and remain in a standby mode.
+This will reset the HubOS environment to a clean state.
 
-If you want to **execute each app individually**, run the following command:
-```
-npm run <appname>  
-```
-e.g.
-```
-npm run butler  # or butlerlocal or fallwatch or smartcamera
-```
-This command executes the specified app in a dev mode by default.
-
-## Evaluation
-
-### Runtime performance of demo applications within HubOS
-
-In this experiment we evaluate the runtime performance of demo applications, that is how much time in ms it takes to execute each of the operation in an application logic.
-
-To run a given application in an evaluation mode execute the following command:
-```
-npm run eval-butler     # or 'eval-fallwatch' or 'eval-smartcamera'
-```
-This will execute a given app 20 times after a 15 times warmup. 
-Feel free to change these configs in `start.js` file. 
-The evaluation runs in minimal output mode. If all goes well you should see the output similar to this one:
-```
-$ npm run eval-butler
-
-> hubos-core@0.0.1 eval-butler
-> NODE_ENV=production node start eval Butler
-
-Finished experiments.
-1, 1.35, 0.9333020044867296     # 'butler-app-fetching-audio' operation took 1.35 ms with stdev=0.933 ms
-2, 134.2, 24.75904938231251     # 'butler-app-speech-recognition' operation took 134.2 ms with stdev=24.759 ms
-3, 2.7, 0.6569466853317864      # ...
-4, 878.15, 15.550511922526265
-5, 0.25, 0.4442616583193193
-6, 0.05, 0.22360679774997894
-[Map Iterator] {
-  'butler-app-fetching-audio',
-  'butler-app-speech-recognition',
-  'event-engine-processing-event',
-  'butler-app-sending-audio-to-cloud',
-  'butler-app-controlling-thermostat',
-  'butler-app-sending-command-to-va'
-}
-```
-There were 6 operations in Bulter application logic that we were measuring.
-Their names are stated in the `Map Iterator` in the order of their execution.
-Above, for each operation, numbered from 1 to 6, there is an average runtime (in ms) and its stdev value (also in ms).
-
-Note, some operations are very fast. For instance a 'butler-app-controlling-thermostat' one. 
-That is due to the fact that HubOS does not actually connect to the Thermostat to change its state. 
-Instead it just assumes that this state change will be done on a higher API level.
-The operation itself is asynchronous and returns immediately. 
-
-Running HubOS application in an evaluation mode generates a **csv file** with all the above measurements in the main project folder.
-The file generated after running Butler app in an evaluation mode would have the following name for example: `eval-results-Butler-hubos.csv`.
-
-
-
-### Runtime performance of demo applications as standalone apps
-
-Follow the instructions at the designated [README.md](evaluation/standalone-apps/README.md) file. 
-
-### Runtime performance of demo applications as cloud apps/microservices
-
-Follow the instructions at the designated [README.md](evaluation/cloud-apps/README.md) file. 
+>It is recommended **not to run HubOS with root privileges**.
+HubOS has been designed to run using **standard user privileges**, without requiring administrative access.
 
