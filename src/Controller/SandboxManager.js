@@ -9,11 +9,16 @@ import hproxy from "../core/HProxy.js";
 import hserver from "../core/Hserver.js";
 import util from 'util'
 import { replaceUnderscoresWithDashes, getHubosTopicFromModule, getModuleSupervTopic } from "../utils/NameUtil.js";
+
+/**
+ * Class in charge of managing sandboxes (containers) for modules with Dockerode.
+ */
 export default class SandboxManager {
 
     /**
      * Simple constructor of SandboxManager
-     * @param {String} socketPath Path to the socket.
+     * Connects to the Docker Engine.
+     * @param {String} socketPath Path to the socket of Docker Engine.
      */
     constructor(socketPath=null){
         this.docker = new Docker();
@@ -27,6 +32,14 @@ export default class SandboxManager {
         this.MQTT_PORT = process.env.MQTT_PORT;
     }
 
+    /**
+     * Create a docker network for HubOS containers.
+     * The network is derived from the bridge driver and configured as a subnet of 172.20.0.0/16.
+     * This function may be deprecated in the future because last version of HubOS require self 
+     * configuration of an isolated network since manipulating iptables require specific access. 
+     * @returns {void} nothing.
+     * @throws {Error} throw an error if occured during the network creation
+     */
     async createIsolatedNetwork() {
         logger.info('Creation of a docker isolated network');
         const networks = await this.docker.listNetworks({filters:{name:['hubos_net']}});
@@ -60,6 +73,15 @@ export default class SandboxManager {
         }
     }
 
+    /**
+     * Recursive function that read the content of a directory add each file into a pack object 
+     * and call this function recursively to read and add the content of each directory.
+     * It is used to recreate a module inside a TAR Stream Pack object.
+     * @param {tarStream.Pack} pack - Tar Stream Pack representing the tar of a module and its content.
+     * @param {String} folder - Absolute path to the current folder. 
+     * @param {String} prefix - Path starting a the root of the module.
+     * @returns {tarStream.Pack} Tar Stream Pack poppulated with all the files and directory of the given module.
+     */
     addDirOnDiskToTar(pack, folder, prefix='') {
         fs.readdirSync(folder).forEach(f => {
             const p = path.join(folder, f);
@@ -71,6 +93,17 @@ export default class SandboxManager {
     }
     
 
+    /**
+     * Create a tar Stream Pack object from the content of a module.
+     * To this tar Stream Pack, the function add also : 
+     * 1. the config.json of the app, in case the module need element defined in it 
+     * (especially for element defined in the [others] field of the config file).
+     * 2. a token.json created from a JWT token that will be used in the future for secure communication between HubOS and modules. 
+     * @param {String} modulePath - Absolute path to the module. 
+     * @param {String} configPath - Absolute path to the config.json file of the app  
+     * @param {String} tokens - JWT token that will be used in the future for secure communication. 
+     * @returns {tarStream.Pack} Tar Stream Pack representing the tar of the module.
+     */
     async buildTarStream(modulePath, configPath, tokens){
         let pack = tarStream.pack()
         
@@ -86,6 +119,7 @@ export default class SandboxManager {
 
     /**
      * Build a docker image using a tar file.
+     * the builded docker image has the name: '<moduleUID>:latest'.
      * @param {any} tarStream - tarStream to build.
      * @param {String} moduleUID - uid of the module the image is build for .
      */
@@ -109,6 +143,22 @@ export default class SandboxManager {
         });    
     }
 
+    /**
+     * Create a container using its imageName.
+     * The container is created using runsc from gVisor,
+     * adding access to the local host, 
+     * specifying the networkMode.
+     * Addings extra details in the .env: 
+     * - Specify the by default use of a HTTP(S)-PROXY service
+     * - Allowing not using the proxy for the localhost and the mqtt broker. 
+     * - MQTT HOST + MQTT PORT
+     * - Module_Topic = the topic the module can use to communicate event.
+     * - Module_Superv_topic = the topic HubOS/OpenHAB use to forward messages to the module.
+     * - HubOS_API = the url for the REST API of HubOS. 
+     * - MQTT_USERNAME + MQTT_PASSWORD in order to connect into the mqtt broker.
+     * @param {String} imageName - just the moduleUID
+     * @returns {Docker.Container} Docker container of the module.
+     */
     async createContainer(imageName){
         const container = await this.docker.createContainer({
             Image: `${imageName}:latest`,
@@ -140,16 +190,25 @@ export default class SandboxManager {
         return container;
     }
 
+    /**
+     * Run a container.
+     * Used if the container was stopped.
+     * @param {String} imageName - just moduleUID
+     */
     async runContainer(imageName){
         await this.docker.run(`${imageName}:latest`)
     }
 
+    /**
+     * Start the given container.
+     * @param {Docker.Container} container - Docker container of a module. 
+     */
     async startContainer(container){
         await container.start();
     }
 
     /**
-     * Build a docker image using a dir and dockerFile.
+     * DEPRECATED - Build a docker image using a dir and dockerFile.
      * @param {String} pathToDir - Path to the dir to build (containing the dockerFile)
      * @param {String} imageName - Name for the docker image.
      * @param {String[]} files - List of additionaly files that are involved in the build 
@@ -167,6 +226,11 @@ export default class SandboxManager {
         });
     }
 
+    /**
+     * Get the container with its name.
+     * @param {String} imageName - Image name <moduleUID>:latest 
+     * @returns {Docker.Container} container of the given imageName if found.
+     */
     async getContainer(imageName){
         const containers = await this.docker.listContainers({all:true})
         for (const c of containers){
@@ -176,6 +240,11 @@ export default class SandboxManager {
         }
     }
 
+    /**
+     * Stop and remove a container using its imageName.
+     * + Remove the linked image.
+     * @param {String} imageName - Image name <moduleUID>:latest.
+     */
     async stopAndRemoveContainer(imageName){
         const containers = await this.docker.listContainers({all:true})
         for (const c of containers){
@@ -196,6 +265,10 @@ export default class SandboxManager {
         }
     }
 
+    /**
+     * Stop a container using its imageName
+     * @param {String} imageName - Image name <moduleUID>:latest 
+     */
     async stopContainer(imageName){
         const containers = await this.docker.listContainers({all:true})
         for (const c of containers){
@@ -207,6 +280,10 @@ export default class SandboxManager {
     }
 
 
+    /**
+     * Remove all Docker containers on host.
+     * !!! TO REWORK - just remove HubOS containers not others. 
+     */
     async removeAllContainersOnHost(){
         this.docker.listImages( (err, containers) => {
             console.log(containers.length)
@@ -225,6 +302,10 @@ export default class SandboxManager {
         })
     }
 
+    /**
+     * Remove a Docker image with its name.
+     * @param {String} imageName - Image name <moduleUID>:latest 
+     */
     async removeImage(imageName){
         const image = this.docker.getImage(imageName);
         image.remove((err, data) => {

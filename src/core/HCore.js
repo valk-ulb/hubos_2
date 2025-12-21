@@ -15,9 +15,16 @@ import hproxy from './HProxy.js';
 import hserver from './Hserver.js';
 dotenv.config({});
 
-
+/**
+ * Class in charge of the core functionalities of HubOS.
+ */
 export default class HCore{
 
+    /**
+     * Constructor of HCore
+     * Instantiates the AppManager, SandboxManager, OpenhabAPI and MqttAdmin.
+     * @param {String} rootDirname - The root directory name where HubOS is running. 
+     */
     constructor(rootDirname){
         this.rootDirname = rootDirname
         this.appDirPath = path.join(rootDirname, './apps/');
@@ -28,35 +35,50 @@ export default class HCore{
         this.mqttAdmin = new MqttAdmin();
     }
 
+    /**
+     * Configures and starts the proxy server.
+     */
     async configureProxy(){
         logger.info('Configure proxy')
         hproxy.startProxy();
         hproxy.configureForwardProxy();
         logger.info('Proxy configured')
     }
-
+    /**
+     * Configures and starts the REST API server.
+     */
     configureRestApi(){
         logger.info('Configure Rest api');
         hserver.setupRoutes();
         hserver.start();
     }
 
+    /**
+     * Connect to the MQTT admin client and subscribes to the admin topic.
+     */
     async initMqtt(){
         await this.mqttAdmin.connect();
         await this.mqttAdmin.subscribeToAdminTopic();
     }
 
+    /**
+     * Extracts all the apps in './apps/' using the AppManager.
+     */
     async extractApps(){
         await this.appManager.extractApps();
     }
 
+    /**
+     * Extracts all the apps in './apps/' in order to delete them from HubOS and the database.
+     * @returns {Array<any>} Array of objects containing app name, app instance and appExist boolean
+     */
     async extractAppsForDelete(){
         return await this.appManager.extractAppsForDelete();
     }
 
     /**
-     * 
-     * @returns {Array<any>}  
+     * gets all the apps managed by the AppManager.
+     * @returns {Array<any>} - 
      */
     getApps(){
         return this.appManager.apps;

@@ -7,8 +7,15 @@ import fs from 'fs/promises';
 import { join } from 'path';
 dotenv.config();
 
+/**
+ * Class representing the database connection and operations.
+ * HubOS uses PostgreSQL as its database system.
+ */
 class Database {
 
+    /**
+     * Constructor of the Database class.
+     */
     constructor() { // default context value if not provided
         this.client = new Client({
             host: process.env.POSTGRES_HOST,
@@ -60,6 +67,7 @@ class Database {
 
     /**
      * Create the necessary extension for the db 
+     * HubOS uses the 'uuid-ossp' extension to generate UUIDs.
      */
     async setupExtension(){
         const client = await this.pool.connect();
@@ -76,6 +84,9 @@ class Database {
         }
     }
 
+    /**
+     * Connect to the db.
+     */
     async connect(){
         this.client.connect()
             .then(() => logger.info('Connected to the db',true))
@@ -85,6 +96,9 @@ class Database {
     }
     
 
+    /**
+     * Disconnect from the db.
+     */
     async disconnect(){
         this.client.end();
     }
@@ -235,4 +249,4 @@ class Database {
 
 const db = new Database();
 
-export default db;
+export default db; // Singleton instance of the Database class

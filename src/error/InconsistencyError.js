@@ -1,5 +1,8 @@
 import logger from '../utils/logger.js'
 
+/**
+ * Class representing an Inconsistency error.
+ */
 export default class InconsistencyError extends Error{
     constructor(message, error=null){
         if (error){

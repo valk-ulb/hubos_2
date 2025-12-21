@@ -4,8 +4,15 @@ import Server from "./Server.js";
 
 import fs from 'fs/promises'
 
+/**
+ * Class representing a configuration from the configuration file of an app.
+ */
 export default class Configuration{
     
+    /**
+     * Constructor of the Configuration class.
+     * Contains devices and servers defined in the configuration file.
+     */
     constructor(){
         this.id = null;
         /** @type {Array<Device>} */
@@ -18,16 +25,26 @@ export default class Configuration{
         this.id = id;
     }
 
+    /**
+     * Set the devices of the configuration.
+     * Used when retrieving configuration from the database.
+     * @param {Array<Device>} devices - array of devices to set.
+     */
     setDevices(devices){
         this.devices = devices;
     }
 
+    /**
+     * Set the servers of the configuration.
+     * Used when retrieving configuration from the database.
+     * @param {Array<Server>} servers - array of servers to set.
+     */
     setServers(servers){
         this.servers = servers;
     }
 
     /**
-     * Extract all the defined servers in the configuration file and store them in the db.
+     * Extract all the  devices defined in the configuration file.
      * @param {any} configurationData - JSON parse of configuration file 
      */
     extractDevices(configurationData){
@@ -43,7 +60,7 @@ export default class Configuration{
     }
 
     /**
-     * Extract all the defined servers in the configuration file and store them in the db.
+     * Extract all the  servers defined in the configuration file.
      * @param {any} configurationData - JSON parse of configuration file. 
      */
     extractServers(configurationData){

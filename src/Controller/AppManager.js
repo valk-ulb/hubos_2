@@ -42,6 +42,11 @@ export default class AppManager {
         logger.info('All apps extracted')
     }
 
+    /**
+     * Extract all app from the apps/ folder for deletion purpose.
+     * appExist flag indicate if the app exist in the db or not.
+     * @returns {Array<any>} - Array of objects containing app name, app instance and appExist boolean.
+     */
     async extractAppsForDelete(){
         logger.info('Extracting all apps from db')
         const appsPath = await this.listAppDirectories(this.appsDirPath) 
@@ -88,6 +93,7 @@ export default class AppManager {
         }
         this.apps.push({'name':appName,'app': newApp, 'appExist':appExist});
     }
+    
 
     async extractAppFromDB(appName, newApp){
         logger.info(`App already exist in the DB`,true);

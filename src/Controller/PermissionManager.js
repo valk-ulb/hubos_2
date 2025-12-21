@@ -1,17 +1,24 @@
 import Device from "../model/Device.js";
 import Permission from "../model/Permission.js";
 import Server from "../model/Server.js";
+
+/**
+ * Class managing permissions for modules.
+ */
 class PermissionManager{
 
-
+    /**
+     * Simple constructor.
+     * this.permissions is a Map with ModuleUID (key):list of Permission (element)
+     */
     constructor(){
         this.moduleIds = null;
         this.permissions = new Map()
     }
 
     /**
-     * 
-     * @param {Array<String>} moduleIds 
+     * Poppulate this.permissions with empty array for each module.
+     * @param {Array<String>} moduleIds - list of moduleUIDs
      */
     setModulesIds(moduleIds){
         this.moduleIds = moduleIds;
@@ -20,6 +27,12 @@ class PermissionManager{
         }
     }
 
+    /**
+     * Verify if a given auth object is already listed in the permission list of a given module.
+     * @param {any} auth - JSON Auth object sent by openhab that contain the permission to attribute. 
+     * @param {String} moduleId - module UID.
+     * @returns {Number} the position in the list if found or -1 if the permission is not already listed, 
+     */
     verifyIfAlreadyPermitted(auth, moduleId){
         let i = 0;
         let res = -1;
@@ -35,6 +48,14 @@ class PermissionManager{
         return res;
     }
 
+    /**
+     * Add a new permission for a given module using the auth object.
+     * First, the function verify if this message define a permission already listed for the given module. 
+     * If exist: upadte the duration of the permission.
+     * If not exist: verify if the permission is about a device or server access and create the correct Permission.
+     * @param {String} message - message containing a JSON Auth object.
+     * @param {String} moduleId - moduleUID
+     */
     addNewPermission(message, moduleId){
         const auths = JSON.parse(message);
         for (const auth of auths){
@@ -54,6 +75,12 @@ class PermissionManager{
         }
     }
 
+    /**
+     * Verify if a module is permitted to access a given URL.
+     * @param {String} url - URL of the web request. 
+     * @param {String} moduleId - moduleUID 
+     * @returns true if a module has a permission that allow it to access this url.
+     */
     isServerPermitted(url, moduleId){
         // if(url.startsWith(hserver.hubosServer) || url.startsWith(hserver.hubosServerAlternative)){
         //     return true;
@@ -72,4 +99,4 @@ class PermissionManager{
 
 const permissionManager = new PermissionManager();
 
-export default permissionManager;
+export default permissionManager; // Singleton

@@ -6,8 +6,20 @@ import MqttNotFoundError from '../error/MqttError.js';
 import { replaceDashesWithUnderscores, replaceUnderscoresWithDashes } from '../utils/NameUtil.js';
 import permissionManager from '../Controller/PermissionManager.js';
 import util from 'util'
+
+/**
+ * Class representing an MQTT admin client to manage dynamic security.
+ * This class handle the connection to the MQTT broker as an admin client and send requests to manage clients, roles and permissions.
+ */
 export default class MqttClient{
     
+    /**
+     * Constructor of the MqttAdmin class.
+     * The admin client use the dynamic-security control topic to send requests.
+     * This client use the MQTT_ADMIN_USERNAME and MQTT_ADMIN_PASSWORD environment variables to connect.
+     * The admin topic is $CONTROL/dynamic-security/v1.
+     * this class use the url mqtt://${process.env.MQTT_HOST}:${process.env.MQTT_PORT} to connect to the MQTT broker.
+     */
     constructor(){
         this.adminTopic = '$CONTROL/dynamic-security/v1';
         this.url = `mqtt://${process.env.MQTT_HOST}:${process.env.MQTT_PORT}`;
@@ -17,6 +29,10 @@ export default class MqttClient{
         this.admin = null;
     }
 
+    /**
+     * Connects to the MQTT broker as an admin client.
+     * @returns {Promise} a Promise that resolves when the connection is established.
+     */
     async connect(){
         return new Promise((resolve, reject) => {
             this.admin = mqtt.connect(this.url, {
@@ -43,11 +59,15 @@ export default class MqttClient{
                 }
     
             });
-
-
         })
     }
 
+    /**
+     * Manage received message on admin topic ($CONTROL/dynamic-security/v1/response). 
+     * Used only to log admin topic responses.
+     * @param {String} topic - topic of the received message. 
+     * @param {String} message - message received. 
+     */
     manageReceivedMessage(topic, message){
         if (topic === `${this.adminTopic}/response`){
             const response = JSON.parse(message);
@@ -55,6 +75,12 @@ export default class MqttClient{
         }
     }
 
+    /**
+     * Manage received auth message on admin auth topic.
+     * Thoses messages are sent by OpenHAB in order to grant permissions to modules when a rule is triggered.
+     * @param {String} topic - auth topic of the received message. 
+     * @param {String} message - auth message received. 
+     */
     manageAuthMessage(topic, message){
         logger.info(`auth message received on ${topic} : ${message}`);
         const concernedModuleId = replaceUnderscoresWithDashes(topic.slice(11));
@@ -65,6 +91,9 @@ export default class MqttClient{
         }
     }
 
+    /**
+     * Disconnect the admin client from the MQTT broker.
+     */
     disconnect() {
         if (this.admin) {
             this.admin.end(() => {
@@ -73,15 +102,21 @@ export default class MqttClient{
         }
     }
 
+    /**
+     * Subscribe to the admin topic to receive responses from the MQTT broker.
+     */
     async subscribeToAdminTopic(){
         if (!this.admin || !this.admin.connected) {
             logger.error('Client MQTT not connected.',true);
             throw new MqttError('Client MQTT not connected');
         }
         await this.admin.subscribe(`${this.adminTopic}/#`);
-
     }
 
+    /**
+     * Subscribe to the auth topic to receive auth messages (permission granting) from OpenHAB
+     * @param {String} topic - the auth topic to subscribe to (look like : "admin/auth-<module_UID_WITH_UNDERSCORE>"). 
+     */
     async subscribeToAuthTopic(topic){
         logger.info("subscribe to "+ topic,true)
         if (!this.admin || !this.admin.connected) {
@@ -93,6 +128,8 @@ export default class MqttClient{
 
     /**
      * Send to the mqtt admin topic a request for creating a new mqtt client. 
+     * Specially used when a new module is added.
+     * A client is created with a specific username (using its moduleId) and password.
      * @param {String} moduleId - module id.
      * @param {String} password - password.
      * @param {String} clientId - client id for the mqtt client.
@@ -138,9 +175,9 @@ export default class MqttClient{
     }
 
     /**
-     * Set client password
+     * Set mqtt client new password
      * @param {String} username - username/moduleId of the client to set. 
-     * @param {*} newPassword - New password to set.
+     * @param {String} newPassword - New password to set.
      */
     async setClientPassword(username, newPassword){
         logger.info(`set client password : ${username}`,true)
@@ -165,7 +202,7 @@ export default class MqttClient{
 
     /**
      * Delete a mqtt client with its username.
-     * @param {String} username - Username of the client to delete. 
+     * @param {String} username - Username/moduleID of the client to delete. 
      */
     async deleteClient(username) {
         logger.info(`deleting client : ${username}`,true)
@@ -188,6 +225,7 @@ export default class MqttClient{
     
     /**
      * restart client from being able to log in. 
+     * Useful when a module is resumed.
      * @param {String} username - Client username.
      */
     async enableClient(username) {
@@ -211,6 +249,7 @@ export default class MqttClient{
 
     /**
      * Stop a client from being able to log in, and kick any clients with matching username that are currently connected.
+     * Useful when a module is paused.
      * @param {String} username Client username. 
      */
     async disableClient(username) {
@@ -234,8 +273,8 @@ export default class MqttClient{
 
     /**
      * get mqtt client from username.
-     * @param {String} username 
-     * @returns 
+     * @param {String} username - username/moduleId of the client to get.
+     * @returns {any} response data containing client information.
      */
     async getClient(username){
         logger.info(`get client : ${username}`,true)
@@ -256,10 +295,15 @@ export default class MqttClient{
     }
 
     /**
-     * Create a role specific for a module. The role only authorize to subscribe to specific topic
+     * Create a role specific for a mqtt module client. 
+     * The role only authorize : 
+     * - to subscribe, publish, and receive message from hubos/topic-${topic}/#
+     *     - Used for the module to send event and trigger rules.
+     * - to subscribe and receive message from hubos/topic-${topic}-superv/#
+     *     - Used by HubOS and OpenHAB to forward messages to the module.
      * @param {String} moduleId - Module UID. 
      * @param {String} rolename - name for the created role
-     * @returns String of rolename 
+     * @returns {String} - name of the created role. 
      */
     async createModuleRole(moduleId, rolename){
         logger.info(`create role : ${moduleId}`,true)
@@ -290,6 +334,12 @@ export default class MqttClient{
         await this.publish(payload,'createRole')
     }
 
+    /**
+     * Verify if a given mqtt client exist with the given role.
+     * @param {String} username - username/moduleId of the client to check.
+     * @param {String} rolename - name of the role to check.
+     * @returns {Boolean} true if the client exist with the given role.
+     */
     async clientExistWithRole(username, rolename){
         let res = await this.getClient(username);
         return res && res.client && 
@@ -298,7 +348,12 @@ export default class MqttClient{
             res.client.roles[0].rolename === rolename;
     }
 
-    //`role_supervisor_${entityName}`
+    /**
+     * Create a supervisor role with all permissions.
+     * Used to create an OpenHAB and HubOS supervisor role.
+     * Does not have the permissions to interact with the admin topic ($CONTROL/dynamic-security/v1).
+     * @param {String} rolename - name of the role to create.
+     */
     async createSupervisorRole(rolename){
         logger.info(`create role : ${rolename}`,true)
         if (!this.admin || !this.admin.connected) {
@@ -326,6 +381,11 @@ export default class MqttClient{
         await this.publish(payload,'createRole')
     }
 
+    /**
+     * Delete a role from the MQTT broker.
+     * Used when a module is deleted.
+     * @param {String} rolename - name of the role to delete.
+     */
     async deleteRole(rolename){
         logger.info(`delete role : ${rolename}`,true)
         if (!this.admin || !this.admin.connected) {
@@ -360,6 +420,15 @@ export default class MqttClient{
         );
     }    */
 
+    /**
+     * Publish a payload to the admin topic and wait for the response.
+     * Used to send commands to the MQTT broker admin topic.
+     * Specially used to create, delete and manage clients, roles and permissions.
+     * This method wait maximum 10 seconds for a response from the broker.
+     * @param {any} payload - payload accepted by the MQTT broker admin topic.
+     * @param {String} exceptedCommand - the command expected in the response (helps to identify the response for the runned command). 
+     * @returns {Promise} a promise that resolves with the response data.
+     */
     async publish(payload, exceptedCommand){
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {

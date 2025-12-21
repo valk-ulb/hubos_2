@@ -1,5 +1,8 @@
 import logger from '../utils/logger.js'
 
+/**
+ * Class representing an MqttAlreadyExist error.
+ */
 export default class MqttAlreadyExistError extends Error{
     constructor(message, error=null){
         if (error){

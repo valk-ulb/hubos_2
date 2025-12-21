@@ -3,6 +3,10 @@ import Server from '../../model/Server.js';
 import db from '../Database.js'
 import DatabaseError from '../../error/DatabaseError.js';
 
+/**
+ * Server Data Access Object.
+ * Used to interact with the server-related tables in the database.
+ */
 export default class ServerDao {
     
     /**

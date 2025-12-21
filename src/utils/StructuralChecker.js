@@ -2,9 +2,10 @@ import fs from 'fs/promises';
 import IncorrectStructureError from '../error/IncorrectStructureError.js';
 
 /**
- * Check if the app root directory contains all the required files and/or directories.
+ * Check if the app root directory contains all the required files and/or directories. (manifest.json file, config.json file, tabac-rules dir, modules dir)
  * @param {String} appPath - Path to the app root directory.
- * @returns return true if all the required files/directories are present.
+ * @returns return true if all the required files/directories are present or throw an IncorrectStructureError.
+ * @throws {IncorrectStructureError} - Throws an IncorrectStructureError if the structure is incorrect or an error occur while reading..
  */
 export async function checkAppRootStructure(appPath){
     try{
@@ -23,9 +24,10 @@ export async function checkAppRootStructure(appPath){
 }
 
 /**
- * Check if the tabac-rules directory contains all the required files and/or directories.
+ * Check if the tabac-rules directory contains all the required files and/or directories (rules.json file).
  * @param {String} tabacPath - Path to the tabac-rules directory.
  * @returns return true if all the required files/directories are present.
+ * @throws {IncorrectStructureError} - Throws an IncorrectStructureError if the structure is incorrect or an error occur while reading..
  */
 export async function checkAppTabacDirStructure(tabacPath){
     try{
@@ -41,9 +43,10 @@ export async function checkAppTabacDirStructure(tabacPath){
 }
 
 /**
- * Check if the modules directory contains all the modules defined in the manifest.json of the app.
- * @param {String} modulesPath - Path to the 'modules' directory path.
+ * Check if the <app_name>/modules directory contains all the modules defined in the <app_name>/manifest.json of the app.
+ * @param {String} modulesPath - Path to the '<app_name>/modules' directory path.
  * @param {String[]} manifestModulesName - List of string of all the modules name defined in the manifest.json.
+ * @throws {IncorrectStructureError} - Throws an IncorrectStructureError if the structure is incorrect or an error occur while reading..
  */
 export async function checkAppModulesDirStructure(modulesPath, manifestModulesName){
     try{
@@ -63,11 +66,11 @@ export async function checkAppModulesDirStructure(modulesPath, manifestModulesNa
 }
 
 /**
- * Check if a given name of file or directory is inside a directory.
- * @param {Dirent[]} entries - A list of dirent.
- * @param {String} name - The name to check for.
+ * Check if a given directory contain a file or directory with a given name.
+ * @param {Dirent[]} entries - A list of dirent (object representing a directory).
+ * @param {String} name - The name of the file or directory to check for.
  * @param {Boolean} isDir - define if we check about a dirname or filename.
- * @returns True if the given name exist inside the directory.
+ * @returns True if the given filename/dirname exist inside the directory.
  */
 export function isNameInEntries(entries, name, isDir){
     if (isDir){

@@ -3,6 +3,10 @@ import Device from '../../model/Device.js';
 import db from '../Database.js'
 import DatabaseError from '../../error/DatabaseError.js';
 
+/**
+ * Device Data Access Object.
+ * Used to interact with the device-related tables in the database.
+ */
 export default class DeviceDao {
     
     /**

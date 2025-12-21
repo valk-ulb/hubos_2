@@ -2,6 +2,11 @@ import App from '../../model/App.js';
 import Module from '../../model/Module.js';
 import db from '../Database.js'
 import DatabaseError from '../../error/DatabaseError.js';
+
+/**
+ * Module Data Access Object.
+ * Used to interact with the module-related tables in the database.
+ */
 export default class ModuleDao {
     
     /**

@@ -5,9 +5,22 @@ import TabacError from '../error/TabacError.js';
 import Module from '../model/Module.js';
 import { getModuleAuthTopic } from '../utils/NameUtil.js';
 import Configuration from '../model/Configuration.js';
+
+/**
+ * Class representing a TABAC rule.
+ * A TABAC rule is composed of a trigger, an array of conditions and an array of actions.
+ * The rule is decoded into an OpenHAB rule accepted by the OpenHAB API and that can be executed by the OpenHAB rule engine.
+ */
 export default class TabacRule {
-    // CHANGED (ANY TO ANY or X TO Y) - UPDATED - CONTAINS - CONTAINS ANY - EQUALS - HIGHER THAN - HIGHER OR EQUALS THAN - LOWER THAN - LOWER OR EQUAL THAN
-    constructor(name,trigger,conditions,actions ) { // default context value if not provided
+
+    /**
+     * Constructor of the TabacRule class.
+     * @param {String} name - the name of the rule. 
+     * @param {any} trigger - JSON object representing the trigger segment of a HubOS rule.
+     * @param {any} conditions - JSON object representing the conditions array of a HubOS rule.
+     * @param {any} actions - JSON object representing the actions array of a HubOS rule.
+     */
+    constructor(name,trigger,conditions,actions) { // default context value if not provided
         this.name = name;
         this.position = 1;
         this.trigger = new TabacTrigger(trigger['event'],trigger['context'],trigger['value'],this.position);
@@ -27,6 +40,13 @@ export default class TabacRule {
         this.openhabRule = null;
     }
 
+    /**
+     * Decode this TabacRule into an OpenHAB rule object accepted by the OpenHAB API.
+     * Decode the trigger, conditions and actions into OpenHAB rule segments.
+     * this.openhabRule is set to the decoded OpenHAB rule object.
+     * @param {String} mqttBrokerUID - the UID of the MQTT broker used for mqtt publish.
+     * @returns a JSON object representing the rule name and the decoded OpenHAB rule. {name:String, openhabRule:Object}
+     */
     decode(mqttBrokerUID){
         const triggers = this.decodeTriggers();
         const openhabActions = this.decodeActions(mqttBrokerUID);
@@ -49,6 +69,10 @@ export default class TabacRule {
         return {name:this.name,openhabRule:this.openhabRule};
     }
 
+    /**
+     * Decode the trigger and conditions of this TabacRule into OpenHAB rule trigger and condition segments accepted by the OpenHAB API.
+     * @returns a JSON object representing the decoded OpenHAB rule trigger and conditions. {openhabTrigger:Object, openhabConditions:Array<Object>}
+     */
     decodeTriggers(){
         const openhabTrigger = this.trigger.decodeTabac();
         let openhabConditions = []
@@ -58,6 +82,11 @@ export default class TabacRule {
         return {openhabTrigger:openhabTrigger, openhabConditions:openhabConditions};
     }
 
+    /**
+     * Decode the actions of this TabacRule into OpenHAB rule action segments accepted by the OpenHAB API.
+     * @param {String} mqttBrokerUID - the UID of the MQTT broker used for mqtt publish. 
+     * @returns a JSON object or an array of JSON objects representing the decoded OpenHAB rule actions.
+     */
     decodeActions(mqttBrokerUID){
         let auths = []
         let modules = []
@@ -90,6 +119,16 @@ export default class TabacRule {
         return openhabActions;
     }
 
+    /**
+     * Create the object accepted by openhab rule engine that define the action to publish a message (value) to a topic (hubosAuthTopic) using the given mqttBrokerUID.
+     * The message contain the auth object that will be sent to HubOS for permission granting.
+     * Especially used for service, device, stream and system actions that require permission granting.
+     * @param {String} message - the message to publish (the auth object). 
+     * @param {String} hubosTopic - the topic to publish the message to (hubosAuthTopic).
+     * @param {String} mqttBrokerUID - the UID of the MQTT broker used for mqtt publish.
+     * @param {Number} position - the position of the action in the rule. 
+     * @returns 
+     */
     publishMqttAccess(message, hubosTopic, mqttBrokerUID, position){
         const res = 
             {
@@ -105,9 +144,9 @@ export default class TabacRule {
     }
 
     /**
-     * Link device and/or server reference with the correct thing uid/host.
-     * @param {Configuration} configuration 
-     * @param {Array<Module>} modules 
+     * Link the entity references (servers, devices, and modules) used in this TabacRule to their actual references from the configuration.
+     * @param {Configuration} configuration - the configuration containing the servers and devices definitions.
+     * @param {Array<Module>} modules - the array of modules of this app.
      */
     linkEntityReferences(configuration, modules){
         this.trigger.linkEntityReferences(configuration.devices, modules);

@@ -1,4 +1,8 @@
 import logger from '../utils/logger.js';
+
+/**
+ * Class representing an UnsafeName error.
+ */
 export default class UnsafeNameError extends Error {
     constructor(message, error=null){
         if (error){

@@ -6,7 +6,15 @@ import permissionManager from '../Controller/PermissionManager.js';
 import { resolve } from 'path';
 import util from 'util'
 import logger from '../utils/logger.js'
+/**
+ * Class representing an HTTP Proxy server.
+ * Used to forward requests from HubOS (modules) containers to external services.
+ */
 class Hproxy{
+    /**
+     * Creates an instance of Hproxy.
+     * accessible via <localhost>:<HUBOS_PROXY_PORT>
+     */
     constructor(){
         //this.target = `http://${process.env.HUBOS_URL}`
         this.port = process.env.HUBOS_PROXY_PORT;
@@ -14,6 +22,15 @@ class Hproxy{
         this.sf = new Straightforward();
     }
 
+    /**
+     * Configures the forward proxy with authentication and permission checks.
+     * Each request is checked to ensure the requesting container has permission
+     * to access the target host.
+     * The authentication is done via Basic Auth headers, where the username
+     * represents the HubOS container ID.
+     * The permissionManager is used to verify if the container is allowed
+     * to access the requested host.
+     */
     configureForwardProxy(){
         this.sf.onRequest.use(async ({req, res}, next) => {
             let hubos_container_id = this.decodeBasicAuthHeader(req.headers['proxy-authorization']);
@@ -54,6 +71,9 @@ class Hproxy{
         }, middleware.auth)
     }
 
+    /**
+     * Starts the proxy server and listens on the configured port.
+     */
     async startProxy(){
         await this.sf.listen(this.port).catch(err => {
             console.error(`Error starting the proxy`, err);
@@ -62,6 +82,13 @@ class Hproxy{
 
     }
 
+    /**
+     * Decodes a Basic Auth header.
+     * Auth header format: "Basic base64(username:password)"
+     * Username and password are the HubOS container ID.
+     * @param {any} headerValue - request.headers['proxy-authorization'] value  
+     * @returns {any} - Object containing username and password of the decoded basic auth.
+     */
     decodeBasicAuthHeader(headerValue){
         if (!headerValue || !headerValue.startsWith('Basic ')) {
             throw new Error('Invalid or missing Basic Auth header');
@@ -79,4 +106,4 @@ class Hproxy{
 
 const hproxy = new Hproxy();
 
-export default hproxy;
+export default hproxy; // singleton

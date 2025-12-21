@@ -1,5 +1,8 @@
 import logger from '../utils/logger.js'
 
+/**
+ * Class representing an EnvFile error.
+ */
 export default class EnvFileError extends Error{
     constructor(message, error=null){
         if (error){

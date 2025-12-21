@@ -3,8 +3,22 @@ import Device from '../model/Device.js';
 import Module from '../model/Module.js';
 import { getItemNameFromModule } from '../utils/NameUtil.js';
 import {isEventMqtt, getEventWithoutPrefix} from '../utils/tabacUtil.js'
+
+/**
+ * Class representing a Tabac trigger or condition.
+ * Triggers/Conditions are defined in <TABAC_RULE_NAME>/When/# and <TABAC_RULE_NAME>/Condition/#.
+ * A trigger/condition can be of type time, device or mqtt event.
+ * This class handles the decoding of the trigger/condition into an OpenHAB rule Trigger/Condition segment.
+ * At this moment, only Updated, Changed, Equals, Higher, Lower, Higher or Equals, Lower or Equals contexts are supported.
+ */
 export default class TabacTrigger {
-    // CHANGED (ANY TO ANY or X TO Y) - UPDATED - CONTAINS - CONTAINS ANY - EQUALS - HIGHER THAN - HIGHER OR EQUALS THAN - LOWER THAN - LOWER OR EQUAL THAN
+    /**
+     * Constructor of a TabacTrigger/Condition.
+     * @param {String} event - the event of the trigger/condition (can be mqtt, system, or device).
+     * @param {String} context - the context of the trigger/condition (equals, higher, lower, GenericCronTrigger,etc.)
+     * @param {Any} values - the values of the trigger/condition used to compare (can be an array or a string).
+     * @param {Number} position - the position of the trigger/condition in the rule.
+     */
     constructor(event, context, values, position) { // default context value if not provided
         this.position = position;
         this.event = event;
@@ -15,11 +29,12 @@ export default class TabacTrigger {
         this.eventWithoutPrefix =  getEventWithoutPrefix(event, this.isEventMqtt);
         this.values = values;
         
+        // if the event is system.time, we have special triggers contexts.
         this.isTime = this.event.toLowerCase() === 'system.time';
-        this.isDateTimeTriggerTimeOnly = this.context === 'DateTimeTriggerTimeOnly';
-        this.isDateTimeTrigger = this.context === 'DateTimeTrigger';
-        this.isTimeOfDayTrigger = this.context === 'TimeOfDayTrigger';
-        this.isGenericCronTrigger = this.context === 'GenericCronTrigger';
+        this.isDateTimeTrigger = this.context === 'DateTimeTrigger'; // the rule is triggered at the date and time specified in an item's state. 
+        this.isDateTimeTriggerTimeOnly = this.context === 'DateTimeTriggerTimeOnly'; // the rule is triggered at the time specified in an item's state and only the time of the item should be compared.
+        this.isTimeOfDayTrigger = this.context === 'TimeOfDayTrigger'; // the rule is triggered at a specific time of the day.
+        this.isGenericCronTrigger = this.context === 'GenericCronTrigger'; // The rule is triggered at specific cron times.
 
         if (this.isTime && Array.isArray(this.values)){
             throw new TabacError('Error: system.timer trigger do not allow array of values.')
@@ -29,6 +44,10 @@ export default class TabacTrigger {
         this.itemName = null;
     }
 
+    /**
+     * Decode this TabacTrigger/Condition into an OpenHAB Rule Trigger/Condition segment.
+     * @returns an Object representing the OpenHAB Rule Trigger/Condition segment.
+     */
     decodeTabac(){
         if (this.isTime){
             if (this.isDateTimeTrigger || this.isDateTimeTriggerTimeOnly){
@@ -49,9 +68,12 @@ export default class TabacTrigger {
     }
 
     /**
-     * 
-     * @param {Array<Device>} devices 
-     * @param {Array<Module>} modules 
+     * Link device and/or server reference with the correct thing uid/host.
+     * Will set linkedDeviceUID for device actions and hostIp for service actions.
+     * @param {Configuration} configuration - the configuration containing devices and servers.
+     * @param {Array<Device>} devices - the list of devices from the configuration of this app. 
+     * @param {Array<Module>} modules - the list of modules of the app to find the concerned module ID.
+     * @throws {TabacError} if impossible to perform link between device or server references.
      */
     linkEntityReferences(devices, modules){
         if (this.isEventMqtt){
@@ -81,7 +103,11 @@ export default class TabacTrigger {
         }
     }
 
-
+    /**
+     * Function dedicated to create a GenericCronTrigger OpenHAB Trigger.
+     * Used when the TabacTrigger is of context GenericCronTrigger.
+     * this.values contain the cron expression.
+     */
     scheduleGenericCronTrigger(){
         this.openhabTrigger = 
             {
@@ -93,6 +119,11 @@ export default class TabacTrigger {
             }
     }
 
+    /**
+     * Function dedicated to create a TimeOfDayTrigger OpenHAB Trigger.
+     * Used when the TabacTrigger is of context TimeOfDayTrigger.
+     * this.values contain the time of day to trigger the rule.
+     */
     scheduleTimeOfDayTrigger(){
         this.openhabTrigger = 
             {
@@ -104,6 +135,12 @@ export default class TabacTrigger {
             }
     }
 
+    /**
+     * Function dedicated to create a DateTimeTrigger OpenHAB Trigger.
+     * Used when the TabacTrigger is of context DateTimeTrigger or DateTimeTriggerTimeOnly.
+     * this.values contain the item name containing the date time to trigger the rule.
+     * if DateTimeTriggerTimeOnly, only the time of the item is considered.
+     */
     scheduleDateTimeTrigger(){
         this.openhabTrigger = 
             {
@@ -116,7 +153,16 @@ export default class TabacTrigger {
             }
     }
 
-
+    /**
+     * Function dedicated to create an ItemStateUpdateTrigger OpenHAB Trigger.
+     * Used when the TabacTrigger is of context Updated.
+     * By default, any state update is considered.
+     * If newState is provided and not 'any', only updates to that state are considered.
+     * ItemStateUpdateTrigger monitors state updates of an item.
+     * in the context of HubOS, the item monitored is generally a module supervision item or an OpenHAB (device) item.
+     * @param {String} itemName - the item name to monitor for state updates.
+     * @param {String} newState - The new state to monitor for updates. If 'any' or empty, any state update is considered.
+     */
     wasUpdated(itemName, newState){
         this.openhabTrigger =
         {
@@ -131,6 +177,18 @@ export default class TabacTrigger {
         }
     }
 
+    /**
+     * Function dedicated to create an ItemStateChangeTrigger OpenHAB Trigger.
+     * Used when the TabacTrigger is of context Changed.
+     * By default, any state change is considered. (from any state to any state)
+     * If fromState is provided and not 'any', only changes from that state are considered.
+     * If toState is provided and not 'any', only changes to that state are considered.
+     * ItemStateChangeTrigger monitors state changes of an item.
+     * in the context of HubOS, the item monitored is generally a module supervision item or an OpenHAB (device) item.
+     * @param {String} itemName - the item name to monitor for state changes.
+     * @param {String} fromState - The previous state to monitor for changes. If 'any' or empty, any previous state is considered.
+     * @param {String} toState - The new state to monitor for changes. If 'any' or empty, any new state is considered.
+     */
     hasChanged(itemName, fromState, toState){
         this.openhabTrigger =
         {
@@ -148,6 +206,13 @@ export default class TabacTrigger {
         }
     }
 
+    /**
+     * Function dedicated to create an ItemStateCondition OpenHAB Trigger.
+     * Used when the TabacTrigger is of operator context (Equals, Higher, Lower, Higher or Equals, Lower or Equals, etc.).
+     * This.values contain the state to compare with.
+     * @param {String} itemName - the item name to monitor for state conditions.
+     * @param {String} toState - The new state to compare with.
+     */
     itemHasAGivenState(itemName, toState){
         let operator = '>';
         switch(this.context.toLowerCase()){
@@ -195,6 +260,12 @@ export default class TabacTrigger {
         }
     }
 
+    /**
+     * Check if the context is one of the following:
+     * equals, not equals, higher, lower, higher or equals, lower or equals,
+     * not higher, not lower, not higher or equals, not lower or equals.
+     * @returns True if the context is one of the operators.
+     */
     isOperator(){
         const operators = ['equals','not equals','higher','lower','higher or equals','lower or equals',
             'not higher','not lower','not higher or equals','not lower or equals'];

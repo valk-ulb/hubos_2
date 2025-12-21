@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "vitest",
-    "reset":"node src/start.js reset --debug",
+    "reset": "node src/start.js reset --debug",
     "prod": "NODE_ENV=production node src/start.js",
     "dev": "NODE_ENV=dev node src/start.js",
     "debug": "node src/start.js start --debug --reset",
@@ -48,6 +48,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "generate-license-file": "^4.1.1",
     "http-proxy-middleware": "^3.0.5",
     "vitest": "^3.1.1"
   }

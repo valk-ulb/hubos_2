@@ -4,6 +4,10 @@ import AppServer from '../../model/Server.js';
 import Configuration from '../../model/Configuration.js';
 import db from '../Database.js'
 
+/**
+ * Configuration Data Access Object.
+ * Used to interact with the configuration-related tables in the database.
+ */
 export default class ConfigurationDao {
 
     /**

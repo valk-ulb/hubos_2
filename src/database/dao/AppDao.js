@@ -4,6 +4,11 @@ import db from '../Database.js'
 import Module from '../../model/Module.js';
 import Device from '../../model/Device.js';
 import logger from '../../utils/logger.js'
+
+/**
+ * App Data Access Object.
+ * Used to interact with the app-related tables in the database.
+ */
 export default class AppDao {
 
     /**
@@ -84,7 +89,7 @@ export default class AppDao {
     }
 
     /**
-     * Add a new device configuration into the device table.
+     * Add a new device from the configuration into the device table.
      * @param {Device} device - The device to add.
      * @param {String} app_id - App uid.
      * @param {String} appName - App name.
@@ -108,7 +113,7 @@ export default class AppDao {
     }
 
     /**
-     * Add a new server configuration into the server table.
+     * Add a new server from the configuration into the server table.
      * @param {Server} device - The server to add.
      * @param {String} app_id - App uid.
      * @param {String} appName - App name.

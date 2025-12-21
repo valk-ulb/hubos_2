@@ -3,17 +3,33 @@ import base64 from 'base-64'
 import OpenhabApiError from '../error/OpenhabApiError.js'
 import util from 'util'
 import { getRuleUID, replaceDashesWithUnderscores, replaceUnderscoresWithDashes } from '../utils/NameUtil.js';
+import logger from '../utils/logger.js';
+/**
+ * Class in charge of the OpenHAB API interactions.
+ */
 export default class OpenhabAPI {
-    constructor() { // default context value if not provided
-       this.websocketUrl = `ws[s]://${process.env.OPENHAB_URL}:8443/ws?accessToken=${process.env.API_TOKEN}`
-       this.baseUrl = `http://${process.env.OPENHAB_URL}:${process.env.OPENHAB_PORT}/rest`
-       this.basicAuth = 'Basic ' + Buffer.from(`${process.env.API_TOKEN}:`).toString('base64');
-       this.brokerThingUID = process.env.MQTT_BROKER_THING_UID;
-       //this.prefix = 'MQTT_Broker_Hubos_';
-       this.rulePrefix = 'Hubos_Rule_';
+
+    /**
+     * Constructor of the OpenhabAPI class.
+     * the websoketUrl and baseUrl are built using the OpenHAB server URL, port, and API token.
+     * OpenHAB API needs basic auth with the API token as username and an empty password.
+     * The OpenHAB API documentation is available at http://<openhab_url>:<openhab_port>/developer/api-explorer
+     */
+    constructor() { 
+        this.websocketUrl = `ws[s]://${process.env.OPENHAB_URL}:8443/ws?accessToken=${process.env.API_TOKEN}`
+        this.baseUrl = `http://${process.env.OPENHAB_URL}:${process.env.OPENHAB_PORT}/rest`
+        this.basicAuth = 'Basic ' + Buffer.from(`${process.env.API_TOKEN}:`).toString('base64');
+        this.brokerThingUID = process.env.MQTT_BROKER_THING_UID;
+        //this.prefix = 'MQTT_Broker_Hubos_';
+        //this.rulePrefix = 'Hubos_Rule_';
         // this.frame = fr.getImageSample();
     }
 
+    /**
+     * Get the state of an item.
+     * @param {String} itemName OpenHAB item name.
+     * @returns {String} The response data containing the item state (see OpenHAB API documentation - GET /items/{itemname}/state).
+     */
     async getItemState(itemName) {
         try {
             const url = `${this.baseUrl}/items/${itemName}/state`
@@ -25,10 +41,16 @@ export default class OpenhabAPI {
             });
             return response.data
         } catch (error) {
-            console.error('Erreur OpenHAB:', error.response?.data || error.message);
+            logger.error('Error OpenHAB:',false, error.response?.data || error.message);
         }
     }
 
+    /**
+     * Set the state of an item.
+     * @param {String} itemName OpenHAB item name.
+     * @param {String} newState The new state to set.
+     * @returns {String} The response data (see OpenHAB API documentation - PUT /items/{itemname}/state).
+     */
     async setItemState(itemName, newState){
         try {
             const url = `${this.baseUrl}/items/${itemName}/state`
@@ -43,10 +65,14 @@ export default class OpenhabAPI {
 
             return response.data
         } catch (error) {
-            console.error('Erreur OpenHAB:', error.response?.data || error.message);
+            logger.error('Error OpenHAB:',false, error.response?.data || error.message);
         }
     }
 
+    /**
+     * Get the broker thing.
+     * @returns {Object} The response data containing the broker thing (see OpenHAB API documentation - GET /things/{thingUID}).
+     */
     async getBrokerThing(){
         try {
             const url = `${this.baseUrl}/things/${this.brokerThingUID}`
@@ -70,6 +96,11 @@ export default class OpenhabAPI {
         }
     }
 
+    /**
+     * Remove an item from the OpenHAB registry.
+     * @param {String} itemName - the name of the item to remove
+     * @returns {String} The response data (see OpenHAB API documentation - DELETE /items/{itemname}).
+     */
     async removeItem(itemName){
         try {
             const url = `${this.baseUrl}/items/${itemName}`
@@ -85,10 +116,15 @@ export default class OpenhabAPI {
         }
     }
 
+    /**
+     * Remove all links that refer to an item or thing.
+     * @param {String} itemName - item name or thing UID.
+     * @returns {String} The response data (see OpenHAB API documentation - DELETE /links/{object}).
+     */
     async removeLink(itemName){
         try {
             const url = `${this.baseUrl}/links/${itemName}`
-            console.log(url)
+            //console.log(url)
             const response = await axios.delete(url, {
                     headers: {
                     'Authorization': this.basicAuth,
@@ -101,6 +137,11 @@ export default class OpenhabAPI {
         }
     }
 
+    /**
+     * Removes an existing rule corresponding to the given ruleUID.
+     * @param {String} ruleUID - UID of the rule to remove
+     * @returns the response data (see OpenHAB API documentation - DELETE /rules/{ruleUID}).
+     */
     async removeRule(ruleUID){
         try {
             const url = `${this.baseUrl}/rules/${ruleUID}`
@@ -116,6 +157,12 @@ export default class OpenhabAPI {
         }
     }
 
+    /**
+     * Links an item to a channel.
+     * Especially used for linking an MQTT topic channel to an item.
+     * @param {String} moduleId - the module UID
+     * @returns response data (see OpenHAB API documentation - PUT /links/{itemname}/{channeluid}).
+     */
     async linkItemToChannel(moduleId){
         try {
             const moduleName = replaceDashesWithUnderscores(moduleId);
@@ -146,6 +193,14 @@ export default class OpenhabAPI {
         }
     }
 
+    /**
+     * Creates a new channel for a topic.
+     * This function first retrieves the current broker thing configuration, adds a new channel for the given topic,
+     * and then updates the broker thing with the new channel configuration.
+     * @param {String} topic - the MQTT topic to create the channel for.
+     * @param {String} moduleId - the module UID
+     * @returns response data (see OpenHAB API documentation - PUT /things/{thingUID}).
+     */
     async createTopicChannel(topic, moduleId){
         try {
             const moduleName = replaceDashesWithUnderscores(moduleId);
@@ -187,10 +242,17 @@ export default class OpenhabAPI {
             });
             return response.data
         } catch (error) {
-            console.error('Erreur OpenHAB:', error.response?.data || error.message);
+            logger.error('Error OpenHAB:',false, error.response?.data || error.message);
         }
     }
 
+    /**
+     * Removes a channel from the MQTT Broker in OpenHAB.
+     * This function first retrieves the current broker thing configuration and its list of linked channels, removes the channel corresponding to the given moduleId,
+     * and then updates the broker thing with the new channel configuration.
+     * @param {String} moduleId - the module UID for which the channel is to be removed
+     * @returns response data (see OpenHAB API documentation - PUT /things/{thingUID}).
+     */
     async removeTopicChannel(moduleId){
         try {
             const moduleName = replaceDashesWithUnderscores(moduleId);
@@ -218,11 +280,16 @@ export default class OpenhabAPI {
             });
             return response.data
         } catch (error) {
-            console.error('Erreur OpenHAB:', error.response?.data || error.message);
+            logger.error('Error OpenHAB:',false, error.response?.data || error.message);
         }
     }
 
-
+    /**
+     * Create an item in OpenHAB that will hold the message published to the module's topic.
+     * @param {String} moduleId - the module UID
+     * @param {String} appName - the application name
+     * @returns response data (see OpenHAB API documentation - PUT /items).
+     */
     async createTopicItem(moduleId, appName){
         try {
             const moduleName= replaceDashesWithUnderscores(moduleId);
@@ -262,10 +329,21 @@ export default class OpenhabAPI {
 
             return response.data
         } catch (error) {
-            console.error('Error OpenHAB:', error.response?.data || error.message);
+            logger.error('Error OpenHAB:',false, error.response?.data || error.message);
         }
     }
 
+    /**
+     * Create a new rule in OpenHAB.
+     * Especially used for creating rules decoded from TABAC rules.
+     * see OpenHAB API documentation - POST /rules
+     * @param {String} appName - the application name
+     * @param {String} appId - the application ID
+     * @param {String} rulename - the rule name
+     * @param {any} triggers - JSON object representing the trigger of the rule (decoded from TabacRule). 
+     * @param {any} conditions - JSON object representing the array of conditions of the rule (decoded from TabacRule).
+     * @param {any} actions - JSON object representing the array of actions of the rule (decoded from TabacRule).
+     */
     async createRule(appName, appId,rulename, triggers, conditions, actions){
         const moduleName = replaceDashesWithUnderscores(appId);
         const uid = getRuleUID(moduleName,rulename)
@@ -298,18 +376,11 @@ export default class OpenhabAPI {
                     'Accept': '*/*'
                 }
             });
-            console.log("Rule created successfully", response.status, response.statusText);
+            logger.info("Rule created successfully",false, response.status, response.statusText);
         }catch(error){
-            console.log("Error creating rule",error.response ? error.response.data : error.message);
+            logger.error("Error creating rule",false,error.response ? error.response.data : error.message);
         }
 
     }
-
-    generateUID() {
-        //const uid = uuidv4().replace(/-/g, '');  // Supprime tous les tirets
-        const uid = 0;
-        return uid;
-    }
-
     
 }

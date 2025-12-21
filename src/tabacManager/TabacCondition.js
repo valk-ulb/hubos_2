@@ -1,7 +1,21 @@
 import {isEventMqtt, getEventWithoutPrefix} from '../utils/tabacUtil.js'
 
+/**
+ * Class representing a Tabac condition.
+ * Conditions are defined in <TABAC_RULE_NAME>/condition/#.
+ * A condition is quite similar to a trigger.
+ * Deprecated: use TabacTrigger.js instead.
+ */
 export default class TabacCondition {
-    constructor(name, event, context, value ) { // default context value if not provided
+    /**
+     * Constructor of a Tabac condition.
+     * quite similar to TabacTrigger.js
+     * @param {String} name - the name of the condition.
+     * @param {String} event - the event of the condition (can be mqtt, system, or device).
+     * @param {String} context - the context of the condition (equals, higher, lower, GenericCronTrigger,etc.)
+     * @param {String} value 
+     */
+    constructor(name, event, context, value ) {
         this.name = name;
         this.event = event;
         this.isEventMqtt = isEventMqtt(event);
@@ -9,7 +23,6 @@ export default class TabacCondition {
         this.context = context;
         this.value = value;
     }
-
 
 
     timeOfDayCondition(){

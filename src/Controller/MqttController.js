@@ -1,8 +1,15 @@
 import MqttNotFoundError from '../error/MqttError.js';
 import MqttAdmin from '../mqtt/MqttAdmin.js';
 import MqttClient from '../mqtt/MqttClient.js';
+
+/**
+ * Class in charge of MQTT communication.
+ */
 export default class MqttController {
 
+    /**
+     * Constructor of the class.
+     */
     constructor(){
         this.adminMqtt = new MqttAdmin();
         this.openhabSupRoleName = `role_supervisor_${process.env.MQTT_HUBOS_CLIENT_USERNAME}`
@@ -28,6 +35,12 @@ export default class MqttController {
         }
     }
 
+    /**
+     * Create a mqtt role + client for a module.
+     * If a module already has a mqtt client do not create it. 
+     * @param {String} moduleId - Module UID 
+     * @param {String} password - Password for the module. 
+     */
     async createModuleClient(moduleId, password){
         const moduleRoleName = `role_${moduleId}`
         if (!await this.adminMqtt.clientExistWithRole(moduleId, moduleRoleName)){
@@ -39,6 +52,10 @@ export default class MqttController {
         }
     }
 
+    /**
+     * Delete the MQTT Client + Role linked to a module.  
+     * @param {String} moduleId - Module UID. 
+     */
     async deleteModuleClient(moduleId){
         const moduleRoleName = `role_${moduleId}`
         try {
