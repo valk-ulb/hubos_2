@@ -4,9 +4,10 @@
  * @param {any} element - The element to validate (in most case, a string).
  * @param {function} safetyCheckerFun - Safety check function (see ./SafetyChecker.js). 
  * @param {Error} error - Error class (see error directory).
- * @param {String} errorDescription - A description of the error to throw.
+ * @param {String} errorDescription - A description of the error if throwned.
  * @param {String} appPath - Path to the app (mainly used to print details when an error is thrown). 
- * @returns True if the given element is not empty and respect the format. Otherwise throw an error.
+ * @returns {Boolean} True if the given element is not empty and respect the format. Otherwise throw an error.
+ * @throws {any} if the element fail the safety check process throw an error using the error class given in param.
  */
 export function checkFormat(element, safetyCheckerFun, error, errorDescription, appPath) {
     if (!element || !safetyCheckerFun(element)){

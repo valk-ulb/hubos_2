@@ -28,7 +28,7 @@ export default class OpenhabAPI {
     /**
      * Get the state of an item.
      * @param {String} itemName OpenHAB item name.
-     * @returns {String} The response data containing the item state (see OpenHAB API documentation - GET /items/{itemname}/state).
+     * @returns {any} The response data containing the item state (see OpenHAB API documentation - GET /items/{itemname}/state).
      */
     async getItemState(itemName) {
         try {
@@ -49,7 +49,7 @@ export default class OpenhabAPI {
      * Set the state of an item.
      * @param {String} itemName OpenHAB item name.
      * @param {String} newState The new state to set.
-     * @returns {String} The response data (see OpenHAB API documentation - PUT /items/{itemname}/state).
+     * @returns {any} The response data (see OpenHAB API documentation - PUT /items/{itemname}/state).
      */
     async setItemState(itemName, newState){
         try {
@@ -71,7 +71,8 @@ export default class OpenhabAPI {
 
     /**
      * Get the broker thing.
-     * @returns {Object} The response data containing the broker thing (see OpenHAB API documentation - GET /things/{thingUID}).
+     * @returns {any} The response data containing the broker thing (see OpenHAB API documentation - GET /things/{thingUID}).
+     * @throws {OpenhabApiError} if an error occur during the API request.
      */
     async getBrokerThing(){
         try {
@@ -99,7 +100,8 @@ export default class OpenhabAPI {
     /**
      * Remove an item from the OpenHAB registry.
      * @param {String} itemName - the name of the item to remove
-     * @returns {String} The response data (see OpenHAB API documentation - DELETE /items/{itemname}).
+     * @returns {any} The response data (see OpenHAB API documentation - DELETE /items/{itemname}).
+     * @throws {OpenhabApiError} if an error occur during the API request.
      */
     async removeItem(itemName){
         try {
@@ -119,7 +121,8 @@ export default class OpenhabAPI {
     /**
      * Remove all links that refer to an item or thing.
      * @param {String} itemName - item name or thing UID.
-     * @returns {String} The response data (see OpenHAB API documentation - DELETE /links/{object}).
+     * @returns {any} The response data (see OpenHAB API documentation - DELETE /links/{object}).
+     * @throws {OpenhabApiError} if an error occur during the API request.
      */
     async removeLink(itemName){
         try {
@@ -140,7 +143,8 @@ export default class OpenhabAPI {
     /**
      * Removes an existing rule corresponding to the given ruleUID.
      * @param {String} ruleUID - UID of the rule to remove
-     * @returns the response data (see OpenHAB API documentation - DELETE /rules/{ruleUID}).
+     * @returns {any} the response data (see OpenHAB API documentation - DELETE /rules/{ruleUID}).
+     * @throws {OpenhabApiError} if an error occur during the API request.
      */
     async removeRule(ruleUID){
         try {
@@ -162,6 +166,7 @@ export default class OpenhabAPI {
      * Especially used for linking an MQTT topic channel to an item.
      * @param {String} moduleId - the module UID
      * @returns response data (see OpenHAB API documentation - PUT /links/{itemname}/{channeluid}).
+     * @throws {OpenhabApiError} if an error occur during the API request.
      */
     async linkItemToChannel(moduleId){
         try {
@@ -199,7 +204,7 @@ export default class OpenhabAPI {
      * and then updates the broker thing with the new channel configuration.
      * @param {String} topic - the MQTT topic to create the channel for.
      * @param {String} moduleId - the module UID
-     * @returns response data (see OpenHAB API documentation - PUT /things/{thingUID}).
+     * @returns {any} response data (see OpenHAB API documentation - PUT /things/{thingUID}).
      */
     async createTopicChannel(topic, moduleId){
         try {
@@ -251,7 +256,7 @@ export default class OpenhabAPI {
      * This function first retrieves the current broker thing configuration and its list of linked channels, removes the channel corresponding to the given moduleId,
      * and then updates the broker thing with the new channel configuration.
      * @param {String} moduleId - the module UID for which the channel is to be removed
-     * @returns response data (see OpenHAB API documentation - PUT /things/{thingUID}).
+     * @returns {any} response data (see OpenHAB API documentation - PUT /things/{thingUID}).
      */
     async removeTopicChannel(moduleId){
         try {
@@ -288,7 +293,7 @@ export default class OpenhabAPI {
      * Create an item in OpenHAB that will hold the message published to the module's topic.
      * @param {String} moduleId - the module UID
      * @param {String} appName - the application name
-     * @returns response data (see OpenHAB API documentation - PUT /items).
+     * @returns {any} response data (see OpenHAB API documentation - PUT /items).
      */
     async createTopicItem(moduleId, appName){
         try {

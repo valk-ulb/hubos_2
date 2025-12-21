@@ -20,7 +20,7 @@ export function getHubosTopicFromModule(moduleId){
 
 /**
  * Create a role name from a module UID by replacing dashes with underscores and prefixing with "role-".
- * Specifically made for the creation of a MQTT ACL role.
+ * Specifically made for the creation of a MQTT role.
  * @param {String} moduleId - the module UID
  * @returns {String} the role name
  */

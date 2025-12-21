@@ -59,6 +59,22 @@ export default class TabacAction {
 
         this.concern = context.concern; // module name concerned by the action
         this.concernModuleID = null;
+
+        /** @type{{id:Number, 
+         * configuration:{
+         * topic: String | undefined,
+         * value: {
+         * period: String,
+         * type: String,
+         * access: String,
+         * server: Array<String> | String | undefined,
+         * hostIp: Array<String> | String | undefined,
+         * deviceUID: String | undefined
+         * },
+         * config: String | undefined,
+         * }, 
+         * type:String}
+         * } */
         this.openhabAction = null;
     }
 
@@ -66,7 +82,14 @@ export default class TabacAction {
      * Create the auth object for this action. 
      * The auth object is an object that OpenHAB rule system will send to HubOS to grant access to a module when the rule is triggered.
      * In other words, it encode this TabacAction into an json object containing the permission informations.
-     * @returns {any} auth object(s) representing the json object for access attribution.
+     * @returns {{
+         * period: String,
+         * type: String,
+         * access: String,
+         * server: Array<String> | String | undefined,
+         * hostIp: Array<String> | String | undefined,
+         * deviceUID: String | undefined
+         * }} auth object(s) representing the json object for access attribution.
      */
     getAuth(){
         let auth = {
@@ -102,11 +125,11 @@ export default class TabacAction {
 
     /**
      * Decode the action segment and create the rule object accepted by the API of OpenHAB. 
-     * If the action is a flow (an action that passes data to a module), create the openhab Action that will send the pass to message hubosModuleTopic (see passTo function).
+     * If the action is a flow (an action that passes data to a module), create the openhab Action that will send the pass_to message to hubosModuleTopic (see passTo function).
      * If the action is else (an action that gives access), create the openhab Action that will publish the MQTT message to the module supervision topic.
-     * @param {String} mqttBrokerUID 
-     * @param {String} hubosModuleTopic 
-     * @param {TabacTrigger} trigger 
+     * @param {String} mqttBrokerUID - OpenHAB UID of the mqtt broker,
+     * @param {String} hubosModuleTopic - MQTT topic of the module,
+     * @param {TabacTrigger} trigger - source of this action in order to get the value field of it.
      */
     decode(mqttBrokerUID, hubosModuleTopic, trigger){
         if(this.isFlow){
@@ -129,7 +152,14 @@ export default class TabacAction {
      * @param {String} mqttBrokerUID - the mqtt broker uid to use for publishing the message.
      * @param {String} message - the message to publish (the auth object).
      * @param {String} hubosTopic - the topic to publish the message to .
-     * @param {String} mqttBrokerUID - the mqtt broker uid to use for publishing the message.
+     * @param {String} mqttBrokerUID - the openhab mqtt broker thing uid to use for publishing the message.
+     * @returns {{id:Number, 
+         * configuration:{
+         * topic: String,
+         * value: String,
+         * config: String
+         * }, 
+         * type:String}} OpenHAB rule-action object that define the action to send a message using the mqtt broker.
      */
     publishMqttAccess(message, hubosTopic, mqttBrokerUID){
         this.openhabAction = 
@@ -150,8 +180,14 @@ export default class TabacAction {
      * Create the OpenHAB Rule Action that define the action to publish a message (value) to a topic (concerned module supervision topic) using the given mqttBrokerUID.
      * The message contain the value to forward to the module.
      * Especially used for flow/passThrough actions.
-     * @param {String} mqttBrokerUID - the mqtt broker uid to use for publishing the message. 
-     * @returns {Object} the openhab Rule Action object.
+     * @param {String} mqttBrokerUID - the openhab mqtt broker thing uid to use for publishing the message. 
+     * @returns {{id:Number, 
+         * configuration:{
+         * topic: String,
+         * value: String,
+         * config: String
+         * }, 
+         * type:String}} OpenHAB rule-action object that define the action to forward a message using the mqtt broker.
      */
     passTo(mqttBrokerUID){
         this.openhabAction = 
@@ -173,6 +209,7 @@ export default class TabacAction {
      * Will set linkedDeviceUID for device actions and hostIp for service actions.
      * @param {Configuration} configuration - the configuration containing devices and servers.
      * @param {Array<Module>} modules - the list of modules of the app to find the concerned module ID.
+     * @returns {void} void
      * @throws {TabacError} if impossible to perform link between device or server references.
      */
     linkEntityReferences(configuration, modules){

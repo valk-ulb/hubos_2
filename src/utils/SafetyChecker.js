@@ -1,6 +1,6 @@
 
 /**
- * Checks if the given name is safe name.
+ * Checks if the given name is a safe name.
  * It allows only alphanumeric characters, hyphens, underscores, and dots.
  * It also disallows any sequence that could lead to directory traversal or injection (like "..").
  * @param {String} name - the name to check
@@ -184,6 +184,7 @@ export function isHostWithEmptyStringAcceptance(text){
  * Check if a given text is a safe pass_to value.
  * No more in use.
  * @param {String} text - the text to check
+ * @returns {Boolean} true if the text is safe.
  */
 export function isSafePassToValue(text){
     const safeRegex = /^[a-zA-Z0-9.\- _\//]+$/;

@@ -30,6 +30,8 @@ class Hproxy{
      * represents the HubOS container ID.
      * The permissionManager is used to verify if the container is allowed
      * to access the requested host.
+     * If not authorized, the request is destroyed.
+     * @returns {void} return nothing if the request is destroyed. return next() if the request is authorized.
      */
     configureForwardProxy(){
         this.sf.onRequest.use(async ({req, res}, next) => {
@@ -87,7 +89,8 @@ class Hproxy{
      * Auth header format: "Basic base64(username:password)"
      * Username and password are the HubOS container ID.
      * @param {any} headerValue - request.headers['proxy-authorization'] value  
-     * @returns {any} - Object containing username and password of the decoded basic auth.
+     * @returns {{String, String}} - Object containing username and password of the decoded basic auth.
+     * @throws {Error} if the Basic Auth Header is invalid or missing.
      */
     decodeBasicAuthHeader(headerValue){
         if (!headerValue || !headerValue.startsWith('Basic ')) {

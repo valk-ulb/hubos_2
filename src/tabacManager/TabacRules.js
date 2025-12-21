@@ -21,6 +21,48 @@ export default class TabacRules {
         const rulesFilePath = tabacRulePath;
         const rulesFile = fs.readFileSync(rulesFilePath);
         this.appTabacRules = JSON.parse(rulesFile);
+
+        /** @type{{name:String, openhabRule:{
+         * configuration: {},
+         * triggers: {
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String},
+         * conditions: Array<{
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String}>,
+         * actions: Array<{id:Number, 
+            * configuration:{
+                * topic: String | undefined,
+                * value: {
+                    * period: String,
+                    * type: String,
+                    * access: String,
+                    * server: Array<String> | String | undefined,
+                    * hostIp: Array<String> | String | undefined,
+                    * deviceUID: String | undefined
+                * },
+                * config: String | undefined,
+            * }, 
+            * type:String}>
+            * }}} */
         this.openhabRules = [];
     }
 

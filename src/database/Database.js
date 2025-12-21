@@ -86,6 +86,7 @@ class Database {
 
     /**
      * Connect to the db.
+     * @throws {DatabaseError} if an error occured during the db connection.
      */
     async connect(){
         this.client.connect()
@@ -156,7 +157,7 @@ class Database {
      * Add a new event into the event table.
      * @param {String} moduleId - UID of the parrent module
      * @param {String} eventName - Name of the event
-     * @returns The UID of the added line.
+     * @returns {String} The UID of the added line.
      */
     async insertEvent(moduleId, eventName){
         const client = await this.pool.connect();
@@ -187,7 +188,7 @@ class Database {
      * Add a new permission into the permission table.
      * @param {String} eventId - UID of the parrent event.
      * @param {String} permissionName - Name of the permission.
-     * @returns The UID of the added line.
+     * @returns {String} The UID of the added line.
      */
     async insertPermission(eventId, permissionName){
         const client = await this.pool.connect();
@@ -217,7 +218,7 @@ class Database {
     /**
      * Gets the UID of an app by its name.
      * @param {App} app - The name of the app.
-     * @returns The app UID if found, or null if not found.
+     * @returns {String} The app UID if found, or null if not found.
      */
     async getAppByName(appName) {
         const client = await db.pool.connect();

@@ -3,8 +3,9 @@ import crypto from "crypto"
 
 /**
  * Function to generate the MD5 hash of a file.
+ * Read the content of a file and generate a MD5 hash from it.
  * @param {String} filePath - Path to the file to hash.
- * @returns {String} The MD5 hash of the file.
+ * @returns {String} The MD5 digest of the file.
  * @throws {Error} - Throws an error if the file does not exist, is a directory, or is not readable.
  */
 export async function signFileMD5(filePath){

@@ -62,15 +62,15 @@ export default class HCore{
     }
 
     /**
-     * Extracts all the apps in './apps/' using the AppManager.
+     * Extracts all the apps in 'src/apps/' using the AppManager.
      */
     async extractApps(){
         await this.appManager.extractApps();
     }
 
     /**
-     * Extracts all the apps in './apps/' in order to delete them from HubOS and the database.
-     * @returns {Array<any>} Array of objects containing app name, app instance and appExist boolean
+     * Extracts all the apps in 'src/apps/' in order to delete them from HubOS and the database.
+     * @returns Array of objects containing app name, app instance and appExist boolean
      */
     async extractAppsForDelete(){
         return await this.appManager.extractAppsForDelete();
@@ -78,12 +78,22 @@ export default class HCore{
 
     /**
      * gets all the apps managed by the AppManager.
-     * @returns {Array<any>} - 
+     * @returns - An array of key-element triple with 
+     * the name of the app, the App object, and appExist set at true if the app was already extracted and present in the db.
+     * {appName}
      */
     getApps(){
         return this.appManager.apps;
     }
 
+    /**
+     * Reset HubOS and remove everything that was created and related to Apps and Modules.
+     * - Remove all Docker Containers and Docker Images.
+     * - Remove all the items, links, channels, and rules that was created by HubOS.
+     * - Remove all MQTT roles and clients (openhabClient + hubOSClient incl.). 
+     * - Drop all the tables on the DB. 
+     * @param {String} databaseDir - Absolute Path of the directory containing the migration file of the DB.
+     */
     async resetAll(databaseDir){
         await db.setupDatabase().catch(()=>{})
         await this.appManager.getAllModulesUID().then(async (modulesUID) => {
@@ -122,6 +132,21 @@ export default class HCore{
         //await db.initDB(databaseDir).catch(()=>{});
     }
 
+    /**
+     * Function in charge to execute HubOS. 
+     * If HubOS is run for the first time: 
+     * - If some docker containers wasn't closed (maybe due to a crash), stop and destroy them.
+     * - Setup the db, add the uuid extension, and init the DB (if not already done).
+     * - Configure the proxy and the REST API server and run it. 
+     * - Create the supervisor role and client (if not already done).
+     * - Iterate over each app in /apps/ and: 
+     *      - Validate the app structure. (if not already present in the DB)
+     *      - Create for each module a mqtt role and client (if new app) 
+     *      - Decode the rules.json and create all the items, links, channels, and rules and sent them to OpenHAB (if new app).
+     *      - HubOS Subscribe to the modules MQTT topics.
+     *      - For each modules, build the Docker Image and create the Docker Container.
+     * @param {String} databaseDir - Absolute Path of the directory containing the migration file of the DB.
+     */
     async run(databaseDir){
         try{
             const allModulesUID = await this.appManager.getAllModulesUID();
@@ -182,6 +207,10 @@ export default class HCore{
         console.log('petit test')
     }
 
+    /**
+     * For each modules listed in modulesUID reset stop their docker container, remove them, and remove the related docker image.
+     * @param {String} modulesUID List of module UIDs
+     */
     async resetContainers(modulesUID){
         for (let moduleUID of modulesUID){
             logger.info(`removing module with uid : ${moduleUID} from system`,true)

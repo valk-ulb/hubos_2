@@ -158,6 +158,7 @@ export default class SandboxManager {
      * - MQTT_USERNAME + MQTT_PASSWORD in order to connect into the mqtt broker.
      * @param {String} imageName - just the moduleUID
      * @returns {Docker.Container} Docker container of the module.
+     * @throws {SandboxError} If an error occured during the creation of the container.
      */
     async createContainer(imageName){
         const container = await this.docker.createContainer({
@@ -211,7 +212,8 @@ export default class SandboxManager {
      * DEPRECATED - Build a docker image using a dir and dockerFile.
      * @param {String} pathToDir - Path to the dir to build (containing the dockerFile)
      * @param {String} imageName - Name for the docker image.
-     * @param {String[]} files - List of additionaly files that are involved in the build 
+     * @param {Array<String>} files - List of additionaly files that are involved in the build.
+     * @throws {SandboxError} If an error occured during the build.
      */
     buildImageWithDir(pathToDir, imageName, files){
         this.docker.buildImage({

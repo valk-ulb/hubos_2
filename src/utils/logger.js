@@ -113,4 +113,4 @@ class Logger {
 
 const loggerInstance = new Logger();
 
-export default loggerInstance;
+export default loggerInstance; //singleton

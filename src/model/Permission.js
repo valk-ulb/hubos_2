@@ -46,7 +46,7 @@ export default class Permission {
      * Check if the given url is permitted by this permission.
      * The permission must be still valid (not expired) and the url must match the server host (or the server host set to 'all').
      * @param {String} url - url or host to check. 
-     * @returns True if the url is permitted by this permission, false otherwise.
+     * @returns {Boolean} True if the url is permitted by this permission, false otherwise.
      */
     isServerPermitted(url){
         const isTimeGood = this.isInfinite || Date.now() <= this.end;
@@ -73,7 +73,7 @@ export default class Permission {
 
     /**
      * Check if the end time of the permission has passed.
-     * @returns True if the end time has passed, false otherwise.
+     * @returns {Boolean} True if the end time has passed, false otherwise.
      */
     isEndTimePassed(){
         return this.isInfinite || Date.now() > this.end;
@@ -83,7 +83,7 @@ export default class Permission {
      * Compare the given auth with this permission.
      * Check if the type and the identifier (deviceUID or host) match.
      * @param {any} auth - the auth to compare with this permission.
-     * @returns True if the auth matches this permission, false otherwise.
+     * @returns {Boolean} True if the auth matches this permission, false otherwise.
      */
     compareAuth(auth){
         if (auth.type === "device" && this.isDevice){

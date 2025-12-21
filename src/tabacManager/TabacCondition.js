@@ -4,7 +4,7 @@ import {isEventMqtt, getEventWithoutPrefix} from '../utils/tabacUtil.js'
  * Class representing a Tabac condition.
  * Conditions are defined in <TABAC_RULE_NAME>/condition/#.
  * A condition is quite similar to a trigger.
- * Deprecated: use TabacTrigger.js instead.
+ * Deprecated: use TabacTrigger.js instead. May be removed in the future.
  */
 export default class TabacCondition {
     /**

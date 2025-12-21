@@ -12,7 +12,8 @@ export default class DeviceDao {
     /**
      * Return the list of devices configuration listed to the app.
      * @param {App} app 
-     * @returns A list of Device objects. 
+     * @returns {Array<Device>} A list of Device objects. 
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async getDevicesFromApp(app){
         try {

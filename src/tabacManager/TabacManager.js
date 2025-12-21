@@ -36,7 +36,7 @@ export default class TabacManager {
     /**
      * Decode all the TabacRules into OpenHAB rules accepted by the OpenHAB API.
      * @param {String} mqttBrokerUID - the UID of the MQTT broker used for mqtt publish.
-     * @returns {TabacRules} JSON object of the decoded OpenHAB rules.
+     * @returns JSON object of the decoded OpenHAB rules.
      */
     getDecodedRules(mqttBrokerUID){
         this.tabacRules.decodeRules(mqttBrokerUID);

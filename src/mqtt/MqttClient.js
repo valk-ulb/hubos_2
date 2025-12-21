@@ -23,7 +23,7 @@ export default class MqttClient{
 
     /**
      * Connects to the MQTT broker as a HubOS supervisor client.
-     * @returns {Promise} a Promise that resolves when the connection is established.
+     * @returns {Promise<any>} a Promise that resolves when the connection is established.
      */
     connect(){
         return new Promise((resolve, reject) => {
@@ -62,6 +62,7 @@ export default class MqttClient{
     /**
      * Subscribe to a topic.
      * @param {String} topic - the topic to subscribe to.
+     * @throws {MqttError} if client not connected or an error resulted from the subscribe.
      */
     subscribe(topic) {
         if (!this.client) throw new MqttError('Client not connected.');
@@ -78,6 +79,7 @@ export default class MqttClient{
      * Publish a message to a topic.
      * @param {String} topic - the topic to publish to.
      * @param {String} message - the message to publish.
+     * @throws {MqttError} if client not connected or an error resulted from the subscribe.
      */
     publish(topic, message) {
         if (!this.client) throw new MqttError('Client not connected.');

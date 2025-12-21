@@ -19,7 +19,9 @@ export default class AppManager {
      * @param {String} appsDir - Path to the apps directory
      */
     constructor(appsDir) { // default context value if not provided
+        /** @type{String} */
         this.appsDirPath = appsDir;
+        /** @type{Array<{name:String, app:App, appExist:Boolean}>} */
         this.apps = [];
     }
 
@@ -45,12 +47,13 @@ export default class AppManager {
     /**
      * Extract all app from the apps/ folder for deletion purpose.
      * appExist flag indicate if the app exist in the db or not.
-     * @returns {Array<any>} - Array of objects containing app name, app instance and appExist boolean.
+     * @returns {Array<{name:String, app:App, appExist:Boolean}>} - Array of objects containing app name, app instance and appExist boolean.
      */
     async extractAppsForDelete(){
         logger.info('Extracting all apps from db')
         const appsPath = await this.listAppDirectories(this.appsDirPath) 
         logger.info(`Founded apps path : ${JSON.stringify(appsPath)}`,true);
+        /** @type{Array<{name:String, app:App, appExist:Boolean}>} */
         let appsTemp = [];
         for (let pair of appsPath){
             try{
@@ -72,6 +75,10 @@ export default class AppManager {
 
     /**
      * Extract the data from a given app.
+     * if the app does not already exist in the DB, verify and extract the app.
+     * Add the extracted app into an array of key-element triple with 
+     * the name of the app, the App object, and appExist set at true if the app was already extracted and present in the db.   
+     * {'name': <string>, 'app':<App>, 'appExist': <Boolean>}
      * @param {String} appName - The app name.
      * @param {String} appPath - The app path.
      */
@@ -95,6 +102,14 @@ export default class AppManager {
     }
     
 
+    /**
+     * Get an app from the db using its appName.
+     * and check if the tabac file has not been modified since the last execution of this app. 
+     * @param {String} appName - name of the app.
+     * @param {App} newApp - app object.
+     * @returns {App} app object completed with the app data found in the db.
+     * @throws {InconsistencyError} if the tabac file hash does not match the stored digest of the app tabac file.
+     */
     async extractAppFromDB(appName, newApp){
         logger.info(`App already exist in the DB`,true);
         newApp = await this.getAppFromDB(appName);
@@ -111,6 +126,11 @@ export default class AppManager {
         return newApp
     }
 
+    /**
+     * Delete an app from the db.
+     * @param {App} app - App to delete.
+     * @throws {InconsistencyError} if the app does not exist in the apps directory. 
+     */
     async deleteApp(app){
         const appDao = new AppDao();
         const appID = app.appId;
@@ -124,6 +144,7 @@ export default class AppManager {
     /**
      * List all the apps directory inside the 'apps' folder.
      * @param {String} appsDirPath - the path to the 'apps' folder.
+     * @throws {UnsafeNameError} if an app name contains unsafe characters.
      */
     async listAppDirectories(appsDirPath){
         let appsPath = [];
@@ -150,18 +171,25 @@ export default class AppManager {
 
     /**
      * Insert the new app into the db 
-     * @param {App} app 
+     * @param {App} app - app to add.
+     * @returns {App} - return the insterted app.
+     * @throws {Error} if the insertion has failed
      */
     async insertAppToDB(app){
         logger.info('inserting app to db',true);
         const appDao = new AppDao();
         const res = await appDao.insertCompleteApp(app);
         if (res === null){
-            throw new Error(`Error: impossible to configure this app: ${app.appName}`)
+            throw new Error(`Error: impossible to insert this app into the db: ${app.appName}`)
         }
         return res;
     }
 
+    /**
+     * Update the tabac rule file digest of the app in the db.
+     * @param {App} app - app to update. 
+     * @param {String} ruleFilePath - Absolute path to the tabac rule file. 
+     */
     async updateAppWithRuleMD5(app, ruleFilePath){
         const digest = await signFileMD5(ruleFilePath);
         const appDao = new AppDao();
@@ -169,9 +197,9 @@ export default class AppManager {
     }
 
     /**
-     * Get the corresponding app from a given app name.
+     * Get the corresponding app from the DB.
      * @param {String} appName - Name of the app to retrieve.
-     * @returns App
+     * @returns {App} - retrieved app.
      */
     async getAppFromDB(appName){
         logger.info('Getting app from DB',true);
@@ -189,6 +217,11 @@ export default class AppManager {
         return app;
     }
 
+    /**
+     * get the stored tabac rule file digest of an app. 
+     * @param {String} appName - name of the concerned app. 
+     * @returns {String} - digest of the tabac rule file of the specified app.
+     */
     async getAppRuleDigestFromDB(appName){
         logger.info('Getting stored rule file signature from DB')
         const appDao = new AppDao();
@@ -200,7 +233,7 @@ export default class AppManager {
      * Verify if an app already exist in the db.
      * @param {String} appName - Name of the app.
      * @param {String} appPath - Path of the app.
-     * @returns 
+     * @returns {Boolean} - True if the app is present and stored in the DB.
      */
     async doesAppExist(appName, appPath){
         const appDao = new AppDao();
@@ -208,6 +241,10 @@ export default class AppManager {
         return await appDao.appExist(appName, appPath);
     } 
 
+    /**
+     * Get from the db, all modules UID. 
+     * @returns {Array<String>} - Array of all modules UID.
+     */
     async getAllModulesUID(){
         const moduleDao = new ModuleDao();
         return await moduleDao.getAllModulesUID();

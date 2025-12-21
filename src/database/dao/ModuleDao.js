@@ -12,7 +12,7 @@ export default class ModuleDao {
     /**
      * Return the list of modules listed to the app.
      * @param {App} app 
-     * @returns A list of Module object. 
+     * @returns {Array<Module>} A list of Module object. 
      */
     async getModulesFromApp(app){
         try {
@@ -36,6 +36,11 @@ export default class ModuleDao {
         }
     }
 
+    /**
+     * Get all modules UID present in the DB. 
+     * @returns {Array<String>} - List of Module UIDs. 
+     * @throws {DatabaseError} if an error occured during the db request.
+     */
     async getAllModulesUID(){
         try {
             const queryText = `

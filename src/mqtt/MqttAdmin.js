@@ -31,7 +31,7 @@ export default class MqttClient{
 
     /**
      * Connects to the MQTT broker as an admin client.
-     * @returns {Promise} a Promise that resolves when the connection is established.
+     * @returns {Promise<any>} a Promise that resolves when the connection is established.
      */
     async connect(){
         return new Promise((resolve, reject) => {
@@ -104,6 +104,7 @@ export default class MqttClient{
 
     /**
      * Subscribe to the admin topic to receive responses from the MQTT broker.
+     * @throws {MqttError} if client not connected.
      */
     async subscribeToAdminTopic(){
         if (!this.admin || !this.admin.connected) {
@@ -116,6 +117,7 @@ export default class MqttClient{
     /**
      * Subscribe to the auth topic to receive auth messages (permission granting) from OpenHAB
      * @param {String} topic - the auth topic to subscribe to (look like : "admin/auth-<module_UID_WITH_UNDERSCORE>"). 
+     * @throws {MqttError} if client not connected.
      */
     async subscribeToAuthTopic(topic){
         logger.info("subscribe to "+ topic,true)
@@ -137,6 +139,7 @@ export default class MqttClient{
      * @param {String} description - description for the mqtt client.
      * @param {String[]} groups - List of group names for the mqtt client.
      * @param {String[]} roles - List of role names for the mqtt client.
+     * @throws {MqttError} if client not connected.
      */
     async createClient(moduleId, password, clientId,description, roles= null, groups=null) {
         logger.info(`creating client for : ${moduleId}`,true)
@@ -178,6 +181,7 @@ export default class MqttClient{
      * Set mqtt client new password
      * @param {String} username - username/moduleId of the client to set. 
      * @param {String} newPassword - New password to set.
+     * @throws {MqttError} if client not connected.
      */
     async setClientPassword(username, newPassword){
         logger.info(`set client password : ${username}`,true)
@@ -203,6 +207,7 @@ export default class MqttClient{
     /**
      * Delete a mqtt client with its username.
      * @param {String} username - Username/moduleID of the client to delete. 
+     * @throws {MqttError} if client not connected.
      */
     async deleteClient(username) {
         logger.info(`deleting client : ${username}`,true)
@@ -227,6 +232,7 @@ export default class MqttClient{
      * restart client from being able to log in. 
      * Useful when a module is resumed.
      * @param {String} username - Client username.
+     * @throws {MqttError} if client not connected.
      */
     async enableClient(username) {
         logger.info(`enabling client : ${username}`,true)
@@ -251,6 +257,7 @@ export default class MqttClient{
      * Stop a client from being able to log in, and kick any clients with matching username that are currently connected.
      * Useful when a module is paused.
      * @param {String} username Client username. 
+     * @throws {MqttError} if client not connected.
      */
     async disableClient(username) {
         logger.info(`disabling client : ${username}`,true)
@@ -274,7 +281,8 @@ export default class MqttClient{
     /**
      * get mqtt client from username.
      * @param {String} username - username/moduleId of the client to get.
-     * @returns {any} response data containing client information.
+     * @returns {Promise<any>} response data containing client information.
+     * @throws {MqttError} if client not connected.
      */
     async getClient(username){
         logger.info(`get client : ${username}`,true)
@@ -303,7 +311,7 @@ export default class MqttClient{
      *     - Used by HubOS and OpenHAB to forward messages to the module.
      * @param {String} moduleId - Module UID. 
      * @param {String} rolename - name for the created role
-     * @returns {String} - name of the created role. 
+     * @throws {MqttError} if client not connected.
      */
     async createModuleRole(moduleId, rolename){
         logger.info(`create role : ${moduleId}`,true)
@@ -338,7 +346,7 @@ export default class MqttClient{
      * Verify if a given mqtt client exist with the given role.
      * @param {String} username - username/moduleId of the client to check.
      * @param {String} rolename - name of the role to check.
-     * @returns {Boolean} true if the client exist with the given role.
+     * @returns {Promise<Boolean>} true if the client exist with the given role.
      */
     async clientExistWithRole(username, rolename){
         let res = await this.getClient(username);
@@ -353,6 +361,7 @@ export default class MqttClient{
      * Used to create an OpenHAB and HubOS supervisor role.
      * Does not have the permissions to interact with the admin topic ($CONTROL/dynamic-security/v1).
      * @param {String} rolename - name of the role to create.
+     * @throws {MqttError} if client not connected.
      */
     async createSupervisorRole(rolename){
         logger.info(`create role : ${rolename}`,true)
@@ -385,6 +394,7 @@ export default class MqttClient{
      * Delete a role from the MQTT broker.
      * Used when a module is deleted.
      * @param {String} rolename - name of the role to delete.
+     * @throws {MqttError} if client not connected.
      */
     async deleteRole(rolename){
         logger.info(`delete role : ${rolename}`,true)
@@ -425,9 +435,10 @@ export default class MqttClient{
      * Used to send commands to the MQTT broker admin topic.
      * Specially used to create, delete and manage clients, roles and permissions.
      * This method wait maximum 10 seconds for a response from the broker.
-     * @param {any} payload - payload accepted by the MQTT broker admin topic.
+     * @param {String | any} payload - payload accepted by the MQTT broker admin topic.
      * @param {String} exceptedCommand - the command expected in the response (helps to identify the response for the runned command). 
-     * @returns {Promise} a promise that resolves with the response data.
+     * @returns {Promise<any>} a promise that resolves with the response data.
+     * @throws {MqttError} if client not connected.
      */
     async publish(payload, exceptedCommand){
         return new Promise((resolve, reject) => {

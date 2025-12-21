@@ -17,8 +17,8 @@ export default class TabacRule {
      * Constructor of the TabacRule class.
      * @param {String} name - the name of the rule. 
      * @param {any} trigger - JSON object representing the trigger segment of a HubOS rule.
-     * @param {any} conditions - JSON object representing the conditions array of a HubOS rule.
-     * @param {any} actions - JSON object representing the actions array of a HubOS rule.
+     * @param {Array<any>} conditions - JSON object representing the conditions array of a HubOS rule.
+     * @param {Array<any>} actions - JSON object representing the actions array of a HubOS rule.
      */
     constructor(name,trigger,conditions,actions) { // default context value if not provided
         this.name = name;
@@ -37,6 +37,49 @@ export default class TabacRule {
         for(const action of actions){
             this.actions.push(new TabacAction(action['access'],action['type'],action['context'],this.position));
         };
+
+        /** @type{{
+         * configuration: {},
+         * triggers: {
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String},
+         * conditions: Array<{
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String}>,
+         * actions: Array<{id:Number, 
+            * configuration:{
+                * topic: String | undefined,
+                * value: {
+                    * period: String,
+                    * type: String,
+                    * access: String,
+                    * server: Array<String> | String | undefined,
+                    * hostIp: Array<String> | String | undefined,
+                    * deviceUID: String | undefined
+                * },
+                * config: String | undefined,
+            * }, 
+            * type:String}
+            * }>
+        }} */
         this.openhabRule = null;
     }
 
@@ -45,7 +88,47 @@ export default class TabacRule {
      * Decode the trigger, conditions and actions into OpenHAB rule segments.
      * this.openhabRule is set to the decoded OpenHAB rule object.
      * @param {String} mqttBrokerUID - the UID of the MQTT broker used for mqtt publish.
-     * @returns a JSON object representing the rule name and the decoded OpenHAB rule. {name:String, openhabRule:Object}
+     * @returns {{name:String, openhabRule:{
+         * configuration: {},
+         * triggers: {
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String},
+         * conditions: Array<{
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String}>,
+         * actions: Array<{id:Number, 
+            * configuration:{
+                * topic: String | undefined,
+                * value: {
+                    * period: String,
+                    * type: String,
+                    * access: String,
+                    * server: Array<String> | String | undefined,
+                    * hostIp: Array<String> | String | undefined,
+                    * deviceUID: String | undefined
+                * },
+                * config: String | undefined,
+            * }, 
+            * type:String}>
+            * }}} a JSON object representing the rule name and the decoded OpenHAB rule. {name:String, openhabRule:Object}
      */
     decode(mqttBrokerUID){
         const triggers = this.decodeTriggers();
@@ -71,8 +154,32 @@ export default class TabacRule {
 
     /**
      * Decode the trigger and conditions of this TabacRule into OpenHAB rule trigger and condition segments accepted by the OpenHAB API.
-     * @returns a JSON object representing the decoded OpenHAB rule trigger and conditions. {openhabTrigger:Object, openhabConditions:Array<Object>}
-     */
+     * @returns {{
+        * openhabTrigger: {
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String},
+        * openhabConditions: Array<{
+            * id:Number, 
+            * configuration:{
+                * cronExpression: String | undefined,
+                * time: String | undefined,
+                * timeOnly: Boolean | undefined,
+                * itemName: String | undefined,
+                * previousState: String | undefined,
+                * state: String | undefined,
+                * operator: String | undefined
+                * }, 
+            * type:String }>}} a JSON object representing the decoded OpenHAB rule trigger and conditions. 
+            */
     decodeTriggers(){
         const openhabTrigger = this.trigger.decodeTabac();
         let openhabConditions = []
@@ -147,6 +254,8 @@ export default class TabacRule {
      * Link the entity references (servers, devices, and modules) used in this TabacRule to their actual references from the configuration.
      * @param {Configuration} configuration - the configuration containing the servers and devices definitions.
      * @param {Array<Module>} modules - the array of modules of this app.
+     * @throws {TabacError} if impossible to perform link between device or server references.
+     * 
      */
     linkEntityReferences(configuration, modules){
         this.trigger.linkEntityReferences(configuration.devices, modules);

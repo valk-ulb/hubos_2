@@ -1,5 +1,5 @@
 /**
- * Return true if the given event has a mqtt. prefix.
+ * Return true if the given event start with a mqtt. prefix.
  * @param {String} event TABAC event field
  */
 export function isEventMqtt(event){
@@ -7,7 +7,7 @@ export function isEventMqtt(event){
 }
 
 /**
- * get event without the prefix mqtt. or system.
+ * get event string without the prefix mqtt. or system.
  * @param {String} event TABAC event field
  * @param {Boolean} isMqtt Boolean indicating if the event is mqtt or system
  */

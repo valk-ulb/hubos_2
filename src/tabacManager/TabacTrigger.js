@@ -18,6 +18,7 @@ export default class TabacTrigger {
      * @param {String} context - the context of the trigger/condition (equals, higher, lower, GenericCronTrigger,etc.)
      * @param {Any} values - the values of the trigger/condition used to compare (can be an array or a string).
      * @param {Number} position - the position of the trigger/condition in the rule.
+     * @throws {TabacError} throw an error if the trigger is system.time and contain an array value.
      */
     constructor(event, context, values, position) { // default context value if not provided
         this.position = position;
@@ -39,6 +40,17 @@ export default class TabacTrigger {
         if (this.isTime && Array.isArray(this.values)){
             throw new TabacError('Error: system.timer trigger do not allow array of values.')
         }
+        /** @type{{id:Number, 
+         * configuration:{
+         * cronExpression: String | undefined,
+         * time: String | undefined,
+         * timeOnly: Boolean | undefined,
+         * itemName: String | undefined,
+         * previousState: String | undefined,
+         * state: String | undefined,
+         * operator: String | undefined
+         * }, 
+         * type:String}} */
         this.openhabTrigger = null;
 
         this.itemName = null;
@@ -46,7 +58,17 @@ export default class TabacTrigger {
 
     /**
      * Decode this TabacTrigger/Condition into an OpenHAB Rule Trigger/Condition segment.
-     * @returns an Object representing the OpenHAB Rule Trigger/Condition segment.
+     * @returns {{id:Number, 
+         * configuration:{
+         * cronExpression: String | undefined,
+         * time: String | undefined,
+         * timeOnly: Boolean | undefined,
+         * itemName: String | undefined,
+         * previousState: String | undefined,
+         * state: String | undefined,
+         * operator: String | undefined
+         * }, 
+         * type:String}} an Object representing the OpenHAB Rule Trigger/Condition segment.
      */
     decodeTabac(){
         if (this.isTime){
@@ -73,6 +95,7 @@ export default class TabacTrigger {
      * @param {Configuration} configuration - the configuration containing devices and servers.
      * @param {Array<Device>} devices - the list of devices from the configuration of this app. 
      * @param {Array<Module>} modules - the list of modules of the app to find the concerned module ID.
+     * @returns {void}
      * @throws {TabacError} if impossible to perform link between device or server references.
      */
     linkEntityReferences(devices, modules){
@@ -264,7 +287,7 @@ export default class TabacTrigger {
      * Check if the context is one of the following:
      * equals, not equals, higher, lower, higher or equals, lower or equals,
      * not higher, not lower, not higher or equals, not lower or equals.
-     * @returns True if the context is one of the operators.
+     * @returns {Boolean} True if the context is one of the operators.
      */
     isOperator(){
         const operators = ['equals','not equals','higher','lower','higher or equals','lower or equals',

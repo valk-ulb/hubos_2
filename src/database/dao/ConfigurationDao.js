@@ -55,7 +55,7 @@ export default class ConfigurationDao {
      * Add a new server configuration into the appServer table.
      * @param {App} app - The device for the app.
      * @param {AppServer} appServer - The server to add.
-     * @returns The UID of the added line.
+     * @returns {String} The UID of the added line.
      */
     async insertAppServer(app, appServer){
         const client = await db.pool.connect();

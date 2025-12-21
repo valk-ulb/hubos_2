@@ -1,6 +1,14 @@
 import logger from './logger.js';
 import jwt from 'jsonwebtoken'
 
+/**
+ * Verify the JWT token in a request header.
+ * Not in use.
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
     export function verifyJWT(req, res, next){
         const authHeader = req.headers['authorization'];
         if (!authHeader) return res.sendStatus(401);

@@ -12,7 +12,7 @@ export default class ServerDao {
     /**
      * Return the list of server configurations listed to the app.
      * @param {App} app 
-     * @returns A list of Server objects. 
+     * @returns {Array<Server>} A list of Server objects. 
      */
     async getServersFromApp(app){
         try {

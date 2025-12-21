@@ -14,6 +14,8 @@ export default class AppDao {
     /**
      * insert a new app and its configuration into the db.
      * @param {App} app - app to add into the db.
+     * @returns {App} - added app.
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async insertCompleteApp(app){
         const client = await db.pool.connect();
@@ -47,7 +49,8 @@ export default class AppDao {
      * add a new app into the app table.
      * @param {App} app - the app to add into the DB.
      * @param {PoolClient} client - postgres pool client. 
-     * @returns The uid of the added app.
+     * @returns {String} The uid of the added app.
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async insertApp(app, client){
         const queryInsertApp = `
@@ -71,6 +74,7 @@ export default class AppDao {
      * @param {String} appName - App name.
      * @param {PoolClient} client - Postgres pool client.
      * @returns The uid of the added module.
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async insertModule(module, app_id, appName, client){
         const queryInsertModule = `
@@ -94,7 +98,8 @@ export default class AppDao {
      * @param {String} app_id - App uid.
      * @param {String} appName - App name.
      * @param {PoolClient} client - Postgres pool client.
-     * @returns The uid of the added device. 
+     * @returns {String} The uid of the added device. 
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async insertAppDevice(device, app_id, appName, client){
         const queryInsertDevice = `
@@ -118,8 +123,8 @@ export default class AppDao {
      * @param {String} app_id - App uid.
      * @param {String} appName - App name.
      * @param {PoolClient} client - Postgres pool client.
-     * @returns The uid of the added server.
-
+     * @returns {String} The uid of the added server.
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async insertAppServer(server, app_id, appName, client){
         const queryInsertServer = `
@@ -138,11 +143,12 @@ export default class AppDao {
     }
 
     /**
-     * Update the rule file hash of an app.
-     * @param {String} app_id App id to update.
+     * Update the tabac rule file digest of an app.
+     * @param {String} app_id - Id of the app to update.
      * @param {String} appName App name to update.
      * @param {String} ruleFileHash Hash string to store. 
-     * @returns True if the hash is successfully added.
+     * @returns {Boolean} True if the hash is successfully added.
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async updateAppRuleFileHash (app_id, appName, ruleFileHash){
         try{
@@ -163,7 +169,8 @@ export default class AppDao {
      * Check if a given app already exist in the db.
      * @param {String} appName - The app name.
      * @param {String} appPath - the app path.
-     * @returns True if the app exist
+     * @returns {Boolean} True if app found
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async appExist(appName, appPath){
         try {
@@ -184,7 +191,8 @@ export default class AppDao {
     /**
      * Gets an app by its name.
      * @param {App} app - The name of the app.
-     * @returns The app if found, or null if not found.
+     * @returns {App | null} The app if found, or null if not found.
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async getAppByName(appName) {
         try {
@@ -208,7 +216,8 @@ export default class AppDao {
     /**
      * Gets the UID of an app by its name.
      * @param {App} app - The name of the app.
-     * @returns The app UID if found, or null if not found.
+     * @returns {String} Digest of the rules file.
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async getRuleDigestByAppName(appName) {
         try {
@@ -232,6 +241,7 @@ export default class AppDao {
     /**
      * Delete an app from the db with its ID.
      * @param {String} appId - UID of App to delete
+     * @throws {DatabaseError} if an error occured during the db request.
      */
     async deleteAppWithId(appId){
         try {
@@ -245,10 +255,11 @@ export default class AppDao {
         }
     }
 
-    async getAllApps(){
-        
-    }
-
+    /**
+     * Get all apps name and UID from the db.
+     * @returns {Array<{name:String, id:String}>} list of apps name and associated UID.
+     * @throws {DatabaseError} if an error occured during the db request.
+     */
     async getAllAppsName(){
         try {
             const queryText = `
