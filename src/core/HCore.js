@@ -145,6 +145,7 @@ export default class HCore{
      *      - Decode the rules.json and create all the items, links, channels, and rules and sent them to OpenHAB (if new app).
      *      - HubOS Subscribe to the modules MQTT topics.
      *      - For each modules, build the Docker Image and create the Docker Container.
+     * (In the future this function will be refactored in order to separate the part that recreate HubOS if it is the first runtime (reason: too much print at start up because of that))
      * @param {String} databaseDir - Absolute Path of the directory containing the migration file of the DB.
      */
     async run(databaseDir){
