@@ -28,17 +28,17 @@ This project is the result of the master's thesis "[HubOS: Improving and Redesig
   Web requests are only performed when necessary, for example to retrieve external information or to temporarily leverage a more powerful cloud-based voice assistant model.\
   In such cases, network access is explicit, controlled, and limited to the required scope, in line with the local-first and privacy-by-design principles.
 ## Table of Contents
-### [Installation Guide](#Installation-Guide)
-#### [Prerequisites](#prerequisites)
-#### [Configurations](#configurations)
-##### [Step I. Configure Mosquitto](#step-i-configure-mosquitto)
-##### [Step II. Configure gVisor](#step-ii-configure-gvisor)
-##### [Step III. Configure OpenHAB](#step-iii-configure-openhab)
-##### [Step IV. Create a Database for HubOS](#step-iv-create-a-database-for-hubos)
-##### [Step V. Configure a Docker Network](#step-v-configure-a-docker-network)
-##### [Step VI. Configure HubOS](#step-vi-configure-hubos)
-##### [Step VII. Run HubOS](#step-vii-run-hubos)
-##### [Step VIII. Add an Application](#step-viii-add-an-application)
+### [Installation Guide](#Installation-Guide-1)
+#### [Prerequisites](#prerequisites-1)
+#### [Configurations](#configurations-1)
+##### [Step I. Configure Mosquitto](#step-i-configure-mosquitto-1)
+##### [Step II. Configure gVisor](#step-ii-configure-gvisor-1)
+##### [Step III. Configure OpenHAB](#step-iii-configure-openhab-1)
+##### [Step IV. Create a Database for HubOS](#step-iv-create-a-database-for-hubos-1)
+##### [Step V. Configure a Docker Network](#step-v-configure-a-docker-network-1)
+##### [Step VI. Configure HubOS](#step-vi-configure-hubos-1)
+##### [Step VII. Run HubOS](#step-vii-run-hubos-1)
+##### [Step VIII. Add an Application](#step-viii-add-an-application-1)
 ## Installation Guide
 ### Prerequisites
 
