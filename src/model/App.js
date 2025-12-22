@@ -21,7 +21,7 @@ export default class App {
 
     /**
      * constructor of App.
-     * @param {String} appPath - Path to the app directory.
+     * @param {String} appPath - Absolute path to the app directory.
      * @param {String} id - UID of the app.
      * @param {String} appName - Name of the app.
      * @param {String} appDescription - Description of the app.
@@ -113,7 +113,7 @@ export default class App {
 
     /**
      * Extract all the devices and servers from the configuration file.
-     * @param {String} configurationPath - Path to the config.json file of the app.
+     * @param {String} configurationPath - Absolute path to the config.json file of the app.
      */
     async extractConfiguration(configurationPath){
         logger.info('extract configuration',true)
@@ -167,8 +167,8 @@ export default class App {
      * Check the file structure of the app. 
      * Verifies that the root structure and the tabac directory structure are correct.
      * If the app structure or files are incorrect, an error is thrown.
-     * @param {String} appPath - Path of the root file.
-     * @param {String} tabacPath - Path of the tabac directory
+     * @param {String} appPath - Absolute path of the root file.
+     * @param {String} tabacPath - Absolute path of the tabac directory
      */
     async checkAppStructure(appPath, tabacPath){
         logger.info('checking app structure',true)
@@ -181,7 +181,7 @@ export default class App {
      * Check if all the fields of the manifest file respect the correct format.
      * Check the correct definition of name, description, type, module.name, module.type and module.description fields.
      * Modules names are used to determine the modules directories location.
-     * @param {String} manifestPath - Path to the manifest file.
+     * @param {String} manifestPath - Absolute path to the manifest file.
      * @param {String} appDirName - Name of the app directory.
      * @returns {Array<String>} names of the modules defined in the manifest file.
      * @throws {IncorrectJsonStructureError} if the manifest file is incorrectly defined.
@@ -220,7 +220,7 @@ export default class App {
      * Check if all the fields of the tabac file respect the correct format.
      * Verifies the correct definition of name, description, when-event, when-context, when-value, 
      * all conditions, and all then fields.
-     * @param {String} tabacFilePath - Path to the rules.json file.
+     * @param {String} tabacFilePath - Absolute path to the rules.json file.
      * @returns {Boolean} true if the tabac file is correctly defined.
      * @throws {IncorrectJsonStructureError} if the tabac file is incorrectly defined.
      */
@@ -338,7 +338,7 @@ export default class App {
      * Check if all the fields of the configuration file respect the correct format.
      * Verifies the correct definition of device names, UIDs, types and descriptions.
      * Verifies the correct definition of server names, hosts and descriptions.
-     * @param {String} configPath - Path to the config file.
+     * @param {String} configPath - Absolute path to the config file.
      * @throws {IncorrectJsonStructureError} if the configuration file is incorrectly defined.
      */
     async checkConfigurationFileStructure(configPath){

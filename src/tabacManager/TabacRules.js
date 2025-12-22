@@ -13,7 +13,7 @@ export default class TabacRules {
 
     /**
      * Constructor of the TabacRules class.
-     * @param {String} tabacRulePath - the path to the tabac rules.json file. 
+     * @param {String} tabacRulePath - Absolute path to the tabac rules.json file. 
      */
     constructor(tabacRulePath) { // default context value if not provided
         /** @type{Array<TabacRule>} */

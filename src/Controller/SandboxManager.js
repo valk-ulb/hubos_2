@@ -210,7 +210,7 @@ export default class SandboxManager {
 
     /**
      * DEPRECATED - Build a docker image using a dir and dockerFile.
-     * @param {String} pathToDir - Path to the dir to build (containing the dockerFile)
+     * @param {String} pathToDir - Absolute path to the dir to build (containing the dockerFile)
      * @param {String} imageName - Name for the docker image.
      * @param {Array<String>} files - List of additionaly files that are involved in the build.
      * @throws {SandboxError} If an error occured during the build.

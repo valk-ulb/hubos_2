@@ -3,6 +3,10 @@
 ## overview 
 **HubOS** is a *private-by-design* orchestration system that integrates seamlessly with the open-source home automation platform **OpenHAB**. Together, they form a new, security-focused home automation environment that remains fully aligned with the values and philosophy promoted by OpenHAB: openness, transparency, user autonomy, and independence from vendor lock-in.
 
+Users can import or create applications designed to accomplish specific tasks while strictly following a private-by-design and local-first philosophy.
+
+Applications operate primarily on the user’s local infrastructure, ensuring that sensitive data remains under the user’s control and is processed locally whenever possible. External communication is limited, explicit, and configurable, in order to minimize data exposure and preserve privacy.
+
 HubOS extends OpenHAB by providing a secure execution runtime for modular applications and automation components. Its design follows a local-first philosophy, ensuring that all processing, decision-making, and data handling occur on the user's own infrastructure whenever possible. This approach enhances privacy, reduces external dependencies, and reinforces the long-term sustainability of the system. 
 
 Built around strict principles, HubOS isolates modules, enforces controlled communication channels, and standardizes configuration and deployment flows. It operates as a complementary layer to OpenHAB, enabling: 
@@ -10,8 +14,31 @@ Built around strict principles, HubOS isolates modules, enforces controlled comm
 - Fine-grained security controls, and 
 - Extensible automation capabilities.
 
-This project is the result of the master's thesis "HubOS: Improving and Redesigning a Local-First, Privacy-by-Design Operating System for Smart Home Applications", in which HubOS was redisigned, hardened, and prepared for production-grade use as a trust-enhancing companion system to OpenHAB
+This project is the result of the master's thesis "[HubOS: Improving and Redesigning a Local-First, Privacy-by-Design Operating System for Smart Home Applications](TODO)", in which HubOS was redisigned, hardened, and prepared for production-grade use as a trust-enhancing companion system to OpenHAB.
 
+### Example of Application
+- **Smart Camera Monitoring Application**
+  
+  An application with access to a camera module that uses a facial recognition component to identify unknown faces.
+  
+  When an unrecognized face is detected, the application automatically sends an alert to the owner along with one or more snapshots of the event.
+- **Local Voice Assistant Application**
+
+  An application that implements a fully local voice assistant service, processing voice commands and interactions directly on the user’s device. \
+  Web requests are only performed when necessary, for example to retrieve external information or to temporarily leverage a more powerful cloud-based voice assistant model.\
+  In such cases, network access is explicit, controlled, and limited to the required scope, in line with the local-first and privacy-by-design principles.
+## Table of Contents
+### [Installation Guide](#Installation-Guide)
+#### [Prerequisites](#prerequisites)
+#### [Configurations](#configurations)
+##### [Step I. Configure Mosquitto](#step-i-configure-mosquitto)
+##### [Step II. Configure gVisor](#step-ii-configure-gvisor)
+##### [Step III. Configure OpenHAB](#step-iii-configure-openhab)
+##### [Step IV. Create a Database for HubOS](#step-iv-create-a-database-for-hubos)
+##### [Step V. Configure a Docker Network](#step-v-configure-a-docker-network)
+##### [Step VI. Configure HubOS](#step-vi-configure-hubos)
+##### [Step VII. Run HubOS](#step-vii-run-hubos)
+##### [Step VIII. Add an Application](#step-viii-add-an-application)
 ## Installation Guide
 ### Prerequisites
 
@@ -34,7 +61,7 @@ To run HubOS, the following dependencies must be installed beforehand:
 HubOS relies on the *Mosquitto Dynamic Security plugin to manage MQTT *access control* for its modules. 
 This plugin allows HubOS to assign fine-grained permissions and restrict which MQTT topics each module can publish to or subscribe to.  
 
-> ###### ⚠️ Important:
+> [!IMPORTANT]
 >If your host is already running a Mosquitto MQTT broker, enabling this plugin and changing the configuration may alter the behaviour of your existing Mosquitto instance. Make sure you understand the impact on your current setup before proceeding.
 
 For the full and up-to-date configuration details, please refer to the official Mosquitto documentation: [Dynamic Security Plugin Documentation](https://mosquitto.org/documentation/dynamic-security/#installation)
@@ -66,11 +93,11 @@ This command will:
 
 - define an initial admin user (admin-user) that you can use to manage roles, clients, and topic access.
 
->###### IMPORTANT
+>[!IMPORTANT]
 >It is important to verify the permissions of the dynamic-security.json file. Make sure it is readable and writable by Mosquitto by running: `$ chmod 666 /path/to/dynamic-security.json`
 
 
->###### 🔐 Security Recommendation
+>[!TIP]
 >It is highly recommended to choose an admin username that is unique (not “admin”, “root”, or other common names) and a strong, randomly generated password.
 This significantly increases the security of your system and prevents unauthorized access to MQTT topic management.
 
@@ -132,7 +159,7 @@ To allow HubOS to authenticate and interact with your OpenHAB instance, you must
 6. Enter the hostname/IP and used port of your Mosquitto broker instance 
 
     ![Adding a MQTT Broker step 6](/images/openhab_add_broker_step_6.png)
-  
+    >[!NOTE]
     > If your MQTT broker is running on localhost (and therefore does not support hostname validation via TLS certificates), you must disable the “Hostname validation” option in the MQTT Broker configuration.
     > This ensures that OpenHAB can successfully establish a connection to the local MQTT broker.
 
@@ -142,6 +169,7 @@ To allow HubOS to authenticate and interact with your OpenHAB instance, you must
 
 8.  Save the MQTT Broker Thing and take note of the Thing UID of the MQTT Broker
    
+    >[!NOTE]
     >You will notice that the Thing status is OFFLINE or shows an error. This is completely normal because the credentials required to connect to the MQTT broker are not yet created (they will be generated during HubOS’s first execution).
 
     ![Adding a MQTT Broker step 8](/images/openhab_add_broker_step_8.png)
@@ -300,6 +328,40 @@ npm run prod -- --reset
 ```
 This will reset the HubOS environment to a clean state.
 
+>[!TIP]
 >It is recommended **not to run HubOS with root privileges**.
 HubOS has been designed to run using **standard user privileges**, without requiring administrative access.
 
+
+#### Step VIII. Add an Application
+
+Applications are added manually to the system.\
+To register a new application, the developer must copy the new application’s directory into the following location: `src/apps/`
+
+Each application added to the src/apps/ directory is represented by a dedicated folder.
+This folder must follow a predefined structure in order to be correctly recognized and executed by HubOS.
+
+An application directory contains the following elements:
+
+- **modules\/**
+
+  Contains the functional modules of the application. Each module is responsible for a specific task or feature and can interact with other modules through well-defined interfaces.
+
+- **tabac-rules/**
+  
+  Contains the tobacco-related rules and constraints applicable to the application. These rules define what the application is allowed to do, under which conditions, and how regulatory compliance is enforced at runtime.
+
+- **config.json**
+  
+  Defines the application’s configuration parameters, such as environment-specific settings, module options, and feature toggles.
+
+- **manifest.json**
+  
+  Describes the application’s metadata, including its name, version, required permissions, dependencies, and entry points.
+
+> [!NOTE]
+> Following this structure is mandatory to ensure proper loading, validation, and execution of the application within the HubOS ecosystem.
+
+Detailed documentation regarding the expected application structure as well as the internal functioning of HubOS is available in the [devs folder](https://github.com/valk-ulb/hubos_2/tree/main/devs)
+
+This documentation provides in-depth technical guidance for developers who wish to create, integrate, or extend applications within the HubOS ecosystem.

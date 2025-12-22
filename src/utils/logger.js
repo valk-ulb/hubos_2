@@ -15,7 +15,7 @@ class Logger {
     /**
      * Constructor of the Logger class.
      * @param {string} [env=process.env.NODE_ENV] - Environment ("production", "development", etc.)
-     * @param {string} [logFilePath='./app.log'] - Path to the log file.
+     * @param {string} [logFilePath='./app.log'] - Absolute path to the log file.
      */
     constructor() {
 

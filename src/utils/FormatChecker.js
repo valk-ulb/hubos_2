@@ -5,7 +5,7 @@
  * @param {function} safetyCheckerFun - Safety check function (see ./SafetyChecker.js). 
  * @param {Error} error - Error class (see error directory).
  * @param {String} errorDescription - A description of the error if throwned.
- * @param {String} appPath - Path to the app (mainly used to print details when an error is thrown). 
+ * @param {String} appPath - Absolute path to the app (mainly used to print details when an error is thrown). 
  * @returns {Boolean} True if the given element is not empty and respect the format. Otherwise throw an error.
  * @throws {any} if the element fail the safety check process throw an error using the error class given in param.
  */

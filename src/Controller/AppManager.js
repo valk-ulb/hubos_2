@@ -16,7 +16,7 @@ export default class AppManager {
 
     /**
      * constructor of AppManager
-     * @param {String} appsDir - Path to the apps directory
+     * @param {String} appsDir - Absolute path to the apps directory
      */
     constructor(appsDir) { // default context value if not provided
         /** @type{String} */
@@ -143,7 +143,7 @@ export default class AppManager {
 
     /**
      * List all the apps directory inside the 'apps' folder.
-     * @param {String} appsDirPath - the path to the 'apps' folder.
+     * @param {String} appsDirPath - Absolute path to the 'apps' folder.
      * @throws {UnsafeNameError} if an app name contains unsafe characters.
      */
     async listAppDirectories(appsDirPath){
@@ -232,7 +232,7 @@ export default class AppManager {
     /**
      * Verify if an app already exist in the db.
      * @param {String} appName - Name of the app.
-     * @param {String} appPath - Path of the app.
+     * @param {String} appPath - Absolute path of the app.
      * @returns {Boolean} - True if the app is present and stored in the DB.
      */
     async doesAppExist(appName, appPath){

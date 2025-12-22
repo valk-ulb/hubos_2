@@ -9,7 +9,7 @@ import Module from '../model/Module.js';
 export default class TabacManager {
     /**
      * Constructor of the TabacManager class.
-     * @param {String} tabacRulePath - the path to the tabac rules.json file. 
+     * @param {String} tabacRulePath - Absolute path to the tabac rules.json file. 
      */
     constructor(tabacRulePath) { // default context value if not provided
         this.tabacRules = new TabacRules(tabacRulePath);
