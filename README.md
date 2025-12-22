@@ -362,6 +362,22 @@ An application directory contains the following elements:
 > [!NOTE]
 > Following this structure is mandatory to ensure proper loading, validation, and execution of the application within the HubOS ecosystem.
 
+##### Running a New Application
+
+After adding a new application to the src/apps/ directory, the system must be reset in order to detect and initialize it.
+
+To do so, run the following command:
+```
+npm run prod --reset
+```
+This command forces HubOS to reload all applications, reinitialize their configurations, and apply the associated rules before execution.
+
+> [!NOTE]
+> This step is recommended because HubOS may have difficulties resuming the execution of modules that have already been executed.
+Performing a full reset ensures that all modules are initialized from a clean state, preventing inconsistent behavior or unexpected side effects.
+
+##### Create a New Application
+
 Detailed documentation regarding the expected application structure as well as the internal functioning of HubOS is available in the [devs folder](https://github.com/valk-ulb/hubos_2/tree/main/devs)
 
 This documentation provides in-depth technical guidance for developers who wish to create, integrate, or extend applications within the HubOS ecosystem.
