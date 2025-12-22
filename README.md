@@ -31,7 +31,7 @@ This project is the result of the master's thesis "[HubOS: Improving and Redesig
 ### [Installation Guide](#Installation-Guide-1)
 #### [Prerequisites](#prerequisites-1)
 #### [Configurations](#configurations-1)
-##### [Step I. Configure Mosquitto](#step-i-configure-mosquitto-1)
+##### [Step I. Configure Mosquitto](#step-i-configure-mosquitto-dynamic-security-plugin)
 ##### [Step II. Configure gVisor](#step-ii-configure-gvisor-1)
 ##### [Step III. Configure OpenHAB](#step-iii-configure-openhab-1)
 ##### [Step IV. Create a Database for HubOS](#step-iv-create-a-database-for-hubos-1)
