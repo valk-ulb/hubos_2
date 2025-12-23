@@ -683,7 +683,16 @@ The App Manager verifies:
 - and tabac-rules/rules.json.
 
 ##### 5. TABAC Rules Extraction
-If validation succeeds, the application is registered and the TABAC rules defined in rules.json are extracted by the TABAC Manager.
+If validation succeeds, the application is registered and the TABAC rules defined in rules.json are extracted by the **TABAC Manager**.
+
+Once the TABAC rules are validated, HubOS computes an **MD5 hash of the `rules.json` file content** and stores this hash in its internal database.
+
+If the computed hash **does not match** the hash stored in the database, the application **will not be executed**, even if it is already present in the database and has been successfully validated in the past.
+
+This mechanism is used to **ensure the integrity of TABAC rules across HubOS executions**, by allowing HubOS to detect whether the rules file has been modified between runs.
+
+This approach is required because **TABAC rules are not stored directly in the database**.
+Instead, the stored hash acts as a reference fingerprint, guaranteeing that the rules executed by OpenHAB remain consistent with the original definition unless an explicit change is detected.
 
 ##### 6. TABAC Rules Decoding
 If the rules reference devices and/or servers, these references are resolved using config.json.
