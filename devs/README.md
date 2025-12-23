@@ -322,7 +322,550 @@ Each TABAC rule is composed of:
     - **when** (main trigger)
     - **conditions** (additional conditions evaluated after the trigger)
     - **then** (actions to execute)
+
+#### When - Trigger Definition
+The `when` section defines what triggers the rule.
+
+It is composed of three fields:
+- event
+- context
+- value
+
+##### event
+
+The event field defines the source of the event.
+Currently, three categories of events are supported:
+
+- device
+- mqtt
+- system
+
+###### device Events
+
+`device` events refer to OpenHAB devices (Things or Items).
+They must reference devices defined in the devices section of config.json.
+
+To do so, the event must use the following format:
+```
+device.<device_name>
+```
+Where `<device_name>` corresponds to the key-device_configuration name defined in the devices section of the configuration file.
+
+###### MQTT Events
+`mqtt` events refer to messages received from MQTT topics.
+
+To define an MQTT-based trigger, the following format is used:
+```
+mqtt.<module_name>
+```
+Where `<module_name>` corresponds to the name of a module.
+This allows the rule to be triggered when a module send an event on its dedicated MQTT topic.
+
+###### System Events
+`system` events refer to system-level values that are not tied to a specific device or module.
+
+Currently, only the following system event is supported:
+```
+system.time
+```
+This event allows rules to be triggered or conditioned based on date and time values.
+
+
+##### Context
+The `context` field defines how the value referenced by `event` is evaluated in order to determine whether the rule should be triggered.
+
+Different types of verifications are supported and grouped into logical categories.
+
+| Context Value             | Type         | Description                                                                                |
+| ------------------------- | ------------ | ------------------------------------------------------------------------------------------ |
+| `equals`                  | Operator     | Triggers the rule if the event value is equal to the specified value.                      |
+| `not_equals`              | Operator     | Triggers the rule if the event value is not equal to the specified value.                  |
+| `higher_or_equals`        | Operator     | Triggers the rule if the event value is greater than or equal to the specified value.      |
+| `higher`                  | Operator     | Triggers the rule if the event value is strictly greater than the specified value.         |
+| `lower_or_equals`         | Operator     | Triggers the rule if the event value is lower than or equal to the specified value.        |
+| `lower`                   | Operator     | Triggers the rule if the event value is strictly lower than the specified value.           |
+| `not_higher_or_equals`    | Operator     | Triggers the rule if the event value is not greater than or equal to the specified value.  |
+| `not_higher`              | Operator     | Triggers the rule if the event value is not strictly greater than the specified value.     |
+| `not_lower_or_equals`     | Operator     | Triggers the rule if the event value is not lower than or equal to the specified value.    |
+| `not_lower`               | Operator     | Triggers the rule if the event value is not strictly lower than the specified value.       |
+| `DateTimeTrigger`         | Time         | Triggers the rule based on a full date and time condition.                                 |
+| `DateTimeTriggerTimeOnly` | Time         | Triggers the rule based only on the time component, ignoring the date.                     |
+| `TimeOfDayTrigger`        | Time         | Triggers the rule when the current time falls within a defined time range.                 |
+| `GenericCronTrigger`      | Time         | Triggers the rule based on a cron expression.                                              |
+| `Changed`                 | State Change | Triggers the rule when the event value changes from its previous state.                    |
+| `Updated`                 | State Change | Triggers the rule whenever the event value is updated, even if the value remains the same. |
+
+##### Value
+The `value` field is the final element of the verification process.
+It defines what the event value is compared against when evaluating the rule trigger.
+
+The exact meaning and expected format of value depend on the context used:
+
+- For **operator-based** contexts (e.g. `equals`, `higher`, `lower`), `value` represents the reference value used for the comparison.
+
+- For **time-based** contexts (e.g. `DateTimeTrigger`, `TimeOfDayTrigger`, `GenericCronTrigger`), value defines the time, date, range, or cron expression that determines when the rule should be triggered.
+
+- For **state-change** contexts (e.g. `Changed`, `Updated`), the value field may be omitted or left empty, as the trigger is based on the detection of a modification rather than a comparison.
+
+The type of the `value` field (string, number, boolean, or structured object) is context-dependent and must be compatible with the selected verification type.
+
+#### Condition - Additional Rule Constraints
+The `conditions` section defines a list of additional checks that are evaluated **after a rule has been triggered**, but before any **action is executed**.
+
+Conditions allow developers to refine rule execution by adding extra verification layers beyond the initial trigger.
+
+Each condition uses the **same structure and fields as the trigger definition**:
+- event
+- context
+- value
+
+Please refer to the [previous section](#when---trigger-definition) for the detailed definition of these fields.
+
+##### Multiple Conditions
+Unlike the when section, the conditions section allows multiple condition entries.
+
+When several conditions are defined:
+
+- All conditions are evaluated using a logical AND operator.
+- This means every condition must be satisfied for the rule to proceed to the action phase.
+
+If at least one condition fails, the rule execution is aborted and no action is performed.
+
+#### Then - Actions Execution
+
+The `then` section defines the **actions that are executed once a rule has been triggered and all conditions have been successfully validated**.
+
+This section describes **what permissions are granted**, to which component, and under which constraints.
+
+Each action is composed of three elements:
+- `access`
+- `type`
+- `context`
+
+HubOS currently supports several action types, each with its own semantics and context definition.
+
+##### Supported Action Types
+
+###### 1. `service` - Grant Access to a Web Service
+
+The `service` action type is used to grant **temporary access to external or local network services**.
+
+At the moment, only the `NetworkClient` access type is supported.
+It allows a module to access one or more hosts for a limited period of time.
+
+```json
+{
+  "access": "NetworkClient",
+  "type": "service",
+  "context": {
+    "period": "<number of milliseconds>",
+    "host": ["<server_name1>", "<server_name2>"],
+    "concern": "<module_name>"
+  }
+}
+```
+**Context fields:**
+- **period** (string, required)
+
+    Duration (in milliseconds) during which the permission is granted.
+
+- **host** (string | array<string>, required)
+
+    (List of) server name(s) as defined in the servers section of config.json.
+
+- **concern** (string, required)
+    
+    The module that will receive the granted permission.
+
+###### 2. `device` - Grant Access to an OpenHAB Device
+
+The `device` action type grants a module access to a local OpenHAB device resource.
+
+The `access` field must reference the device name as defined in the devices section of config.json.
+
+```json
+{
+  "access": "<device_name>",
+  "type": "device",
+  "context": {
+    "period": "<number of milliseconds>",
+    "concern": "<module_name>"
+  }
+}
+```
+**Context fileds:**
+- **period** (string, required)
+    
+    Duration (in milliseconds) during which the device access is granted.
+
+- **concern** (string, required)
+    
+    The module that will receive access to the device.
+
+>[!IMPORTANT]
+>This action type is not fully implemented yet and will be defined in a future update of HubOS.
+###### 3. `stream` - Grant Access to a Local Stream
+
+The `stream` action type is intended to grant access to local streaming resources, such as:
+- cameras,
+- microphones,
+- voice assistants,
+- or other real-time streams.
+
+>[!IMPORTANT]
+>This action type is not fully implemented yet and will be defined in a future update of HubOS.
+
+###### 4. `flow` - Send a Message Through MQTT
+
+The `flow` action type allows HubOS to **send a message to a module via MQTT**.
+
+Currently, only the `pass_through` access mode is supported.
+```json
+{
+  "access": "pass_through",
+  "type": "flow",
+  "context": {
+    "concern": "<module_name>",
+    "value": "<message to send>"
+  }
+}
+```
+- concern (string, required)
+
+    The module that will receive access to the device.
+- Value (string, required)
+
+    The message payload to forward.
+
+#### Structure of a TABAC Rule
+```json
+[
+    {
+        "name":"<rule_name>",
+        "description":"<description of the rule>",
+        "when":{
+            "event": "<device.x|mqtt.x|system.time>",
+            "context": "lower|higher_or_equals|GenericCronTrigger|changed|updated|etc.",
+            "value": "String|Number|Array<String>|Array<Number>"
+        },
+        "condition":[
+            {
+                "if":{
+                    "event": "<device.x|mqtt.x|system.time>",
+                    "context": "lower|higher_or_equals|GenericCronTrigger|changed|updated|etc.",
+                    "value": "String|Number|Array<String>|Array<Number>"
+                }
+            },
+            {
+                #etc.
+            }
+        ],
+        "then":[
+            {
+                "access": "NetworkClient",
+                "type": "service",
+                "context":{
+                    "period" : "1800", //1.8 sec
+                    "host" : ["<server_name1","server_name2"], 
+                    // or "host" : "<server_name2>",
+                    "concern": "<module_name>"
+                }
+            },
+            {
+                "access": "device.<device_name>",
+                "type": "device",
+                "context":{
+                    "period" : "1800", //1.8 sec
+                    "concern": "<module_name>"
+                }
+            },
+            {
+                "access": "pass_through",
+                "type": "flow",
+                "context": {
+                    "concern": "<module_name>",
+                    "value": "<message>"
+                }
+            }
+        ]
+    }
+]
+```
 ### Modules
-Dockerfile
-.env
+
+The creation of modules is **left entirely to the developer**.
+
+Each module represents an independent functional component of an application.
+
+HubOS executes every module inside an **isolated Docker container**.
+
+As a result, each module must provide a `Dockerfile` at its root level in order to allow HubOS to build and run the container.
+
+Without a valid `Dockerfile`, the module cannot be executed and the application will fail validation.
+
+During the **Docker image build process**, the application’s `config.json` file is **copied into the root of the module container**.
+
+This allows the module to access all configuration data defined by the end user at runtime.
+
+By injecting `config.json` directly into the container, HubOS ensures:
+
+- a **single source of configuration** for the entire application,
+
+- no hardcoded environment-specific values inside module code,
+
+- and consistent behavior across different user environments.
+
+
+This container-based execution model ensures:
+
+- isolation between modules,
+- controlled access to system resources,
+- and a consistent execution environment across deployments.
+
+
+
+
+## Logic of HubOS 
+This section describes the internal logic of the HubOS system.
+
+It explains how HubOS validates applications, manages module execution, enforces permissions, and orchestrates interactions between modules, devices, services, and rules.
+
+### Module MQTT Topics
+
+HubOS defines **three categories of MQTT topics** for each module.
+These topics structure the communication between modules, HubOS, and OpenHAB.
+
+#### 1. Module Topic
+
+The **module topic** is assigned to a specific module.
+Its primary purpose is to allow the module to **publish events** that may trigger TABAC rules.
+
+Messages published on this topic are interpreted by HubOS as potential rule triggers and are processed accordingly.
+
+#### 2. Auth Topic
+
+The **Auth topic** is a reserved topic used exclusively by OpenHAB and HubOS.
+
+Its purpose is to allow OpenHAB to communicate with HubOS in order to **grant permissions** to a module, as defined by TABAC rules.
+
+The messages exchanged through the Auth topic are called **Auth Objects** and are encoded in **JSON format**.
+
+Modules do not publish to or consume from this topic directly.
+
+#### 3. Supervision Topic (superv)
+
+The **supervision topic** (superv) is used by OpenHAB to **send messages** to a module.
+
+It is primarily used to forward messages resulting from a `flow` action of type `pass_through`, allowing OpenHAB to deliver action payloads directly to the targeted module. 
+
+### HubOS Initialization Phase – Overview
+
+![Init Phase](./images/hubos_init_phase.png)
+This section provides a high-level overview of the HubOS initialization phase, describing the main steps executed when the system starts.
+
+#### Global Initialization Steps
+
+##### 1. MQTT Clients Initialization
+HubOS creates the MQTT clients required for both **OpenHAB** and **HubOS**.
+These clients have full access to the MQTT topic hierarchy and are used as the core communication layer.
+
+##### 2. Applications Discovery
+HubOS scans the `/src/apps` directory and reads all applications present in this folder.
+
+##### 3. Application Extraction
+Each application is extracted and processed by the **App Manager**.
+
+##### 4. Application Validation
+The App Manager verifies:
+- the application file structure,
+- the presence and validity of manifest.json,
+- config.json,
+- and tabac-rules/rules.json.
+
+##### 5. TABAC Rules Extraction
+If validation succeeds, the application is registered and the TABAC rules defined in rules.json are extracted by the TABAC Manager.
+
+##### 6. TABAC Rules Decoding
+If the rules reference devices and/or servers, these references are resolved using config.json.
+TABAC rules are then decoded into OpenHAB-compatible rule payloads, which will later be sent to the OpenHAB API.
+
+#### Per-Application Initialization
+For **each registered application**, HubOS performs the following steps:
+
+For each module of the application:
+
+##### 7. Module MQTT Client Creation
+A dedicated MQTT client is created for the module.
+
+##### 8. OpenHAB Objects Creation
+HubOS creates the required OpenHAB objects:
+- Items
+- Channels
+- Links between Items and Channels
+
+>[!NOTE]
+>Each channel represents an MQTT topic created on the OpenHAB Thing representing the MQTT broker.
+>Linking a channel to an item allows OpenHAB to read messages published on that topic.
+
+##### 9. Authorization Topic Subscription
+HubOS subscribes to the **Auth MQTT topic** dedicated to the module.
+
+>[!NOTE]
+>This topic allows OpenHAB to notify HubOS when permissions must be dynamically granted to the module (as defined by TABAC rules).
+
+##### 10. Module Container Creation
+HubOS builds and starts the Docker container associated with the module.
+
+##### 11. OpenHAB Rules Deployment
+For each application, HubOS sends the decoded OpenHAB rules (generated from TABAC rules) to the OpenHAB API for creation and activation.
+
+
+### Runtime Example – TABAC Rule Trigger and Permission Attribution
+
+This section presents a **runtime example** of an application after the initialization phase.
+The goal is to illustrate:
+
+- how a **TABAC rule** is triggered,
+
+- and how **permissions are dynamically attributed** to modules at runtime.
+
+#### Example Application Definition
+
+The example application is composed of two modules.
+
+##### Application Manifest
+```json
+{
+  "name": "exampleOfApp",
+  "description": "This is an example of app",
+  "type": "example",
+  "modules": [
+    {
+      "name": "module1",
+      "type": "triggeredModule",
+      "description": "Module triggered by a rule"
+    },
+    {
+      "name": "module2",
+      "type": "triggerModule",
+      "description": "Module that triggers a rule"
+    }
+  ]
+}
+```
+##### Application Configuration
+```json
+{
+  "configuration": {
+    "devices": {
+      "myItem": {
+        "UID": "myItemName",
+        "type": "simple_Item",
+        "description": "OpenHAB String item used to display a message."
+      }
+    },
+    "servers": {
+      "myWeatherServer": {
+        "host": "api.myWeather.com:443",
+        "description": "Weather API used to retrieve the latest outdoor temperature"
+      }
+    },
+    "others": {
+      "myWeatherServerCred": {
+        "token": "AAAA-BBBB-CCCC",
+        "description": "myWeather.com API token"
+      }
+    }
+  }
+}
+```
+##### TABAC Rule Definition
+```json
+[
+  {
+    "name": "ask_web_for_last_outdoor_temperature",
+    "description": "Module2 allows Module1 to access the weather service to retrieve the last outdoor temperature",
+    "when": {
+      "event": "mqtt.module2",
+      "context": "updated",
+      "value": "get_temperature"
+    },
+    "condition": [
+      {
+        "name": "and_if_morning",
+        "description": "Only if the time is between 6 AM and 11 AM",
+        "if": {
+          "event": "system.time",
+          "context": "GenericCronTrigger",
+          "value": "0 0 6-10 * * ? *"
+        }
+      }
+    ],
+    "then": [
+      {
+        "access": "NetworkClient",
+        "type": "service",
+        "context": {
+          "period": "60000",
+          "host": "myWeatherServer",
+          "concern": "module1"
+        }
+      },
+      {
+        "access": "pass_through",
+        "type": "flow",
+        "context": {
+          "concern": "module1",
+          "value": "get_temperature"
+        }
+      }
+    ]
+  }
+]
+```
+
+#### Runtime Sequence
+Based on the application above, the following runtime behavior occurs:
+![Example of Runtime](./images/hubos_example_of_runtime.png)
+##### Initialization-Related Subscriptions
+
+1. As part of the initialization phase, **HubOS subscribes to the Auth topics** dedicated to **module1** and **module2**.
+
+2. OpenHAB subscribes to the module topics of **module1** and **module2**.
+
+3. Module1 subscribes to its **supervision topic** (superv).
+
+4. Module2 subscribes to its **supervision topic** (superv).
+
+##### Triggering a TABAC Rule
+
+5. **Module2 wants to wake up Module1** and publishes a message to its **dedicated module topic**, triggering the TABAC rule `ask_web_for_last_outdoor_temperature`.
+
+6. OpenHAB **receives the message** and verifies:
+
+   - whether it triggers an OpenHAB rule,
+
+  - whether all additional conditions are satisfied.
+
+    If both are valid, OpenHAB executes the rule actions.
+
+##### Permission Attribution and Message Forwarding
+
+7. OpenHAB **publishes an Auth Object** on the **Auth topic of Module1**, requesting permission attribution.
+
+8. HubOS **intercepts the Auth message** and forwards it to the **Permission Manager**, which updates Module1’s permissions.
+
+9. **OpenHAB publishes a message on the superv topic of Module1** to forward the action payload.
+
+##### Controlled Network Access
+
+10. **Module1 receives the supervision message** and understands that it now has permission to access the weather web service (`api.myWeather.com:443`). It then issues the web request.
+
+11. The **outgoing web request is intercepted by the HubOS proxy service**.
+
+12. The proxy queries the **Permission Manager** to verify whether:
+
+    >Is Module1 allowed to access this host at this time?
+
+13. The **Permission Manager validates the request**, and the proxy **forwards the web request** to the external service.
 
