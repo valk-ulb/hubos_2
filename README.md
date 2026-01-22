@@ -368,7 +368,7 @@ After adding a new application to the src/apps/ directory, the system must be re
 
 To do so, run the following command:
 ```
-npm run prod --reset
+node src/start.js start (--reset/-r) (--debug/-d)
 ```
 This command forces HubOS to reload all applications, reinitialize their configurations, and apply the associated rules before execution.
 
