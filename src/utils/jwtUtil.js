@@ -27,21 +27,32 @@ import jwt from 'jsonwebtoken'
 
     /**
      * create both jwt access and refresh token.
+     * TO IMPLEMENT CORRECTLY
+     * @param {String} moduleId 
+     * @returns object contening an access token and a refresh token.
+     */
+    // export function createJWT(moduleId){
+    //     const accessToken = jwt.sign(
+    //         {'username':moduleId},
+    //         process.env.ACCESS_TOKEN_SECRET,
+    //         { expiresIn: process.env.ACCESS_TIME_BEFORE_EXPIRATION}
+    //     );
+    //     const refreshToken = jwt.sign(
+    //         {'username':moduleId},
+    //         process.env.REFRESH_TOKEN_SECRET,
+    //         { expiresIn: process.env.REFRESH_TIME_BEFORE_EXPIRATION}
+    //     );
+    //     return {accessToken: accessToken, refreshToken: refreshToken};
+    // }
+
+    /**
+     * Fake createJWT function to remove with the real one (when implemented correctly in the future)
      * @param {String} moduleId 
      * @returns object contening an access token and a refresh token.
      */
     export function createJWT(moduleId){
-        const accessToken = jwt.sign(
-            {'username':moduleId},
-            process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.ACCESS_TIME_BEFORE_EXPIRATION}
-        );
-        const refreshToken = jwt.sign(
-            {'username':moduleId},
-            process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: process.env.REFRESH_TIME_BEFORE_EXPIRATION}
-        );
-        return {accessToken: accessToken, refreshToken: refreshToken};
+        
+        return {accessToken: "accessToken", refreshToken: "refreshToken"};
     }
     
     export function generateSecretKey(){
